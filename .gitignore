@@ -1,4 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
+.gradle
+.idea
 ### Windows template
 # Windows thumbnail cache files
 Thumbs.db
@@ -60,3 +62,6 @@ Temporary Items
 *.tar.gz
 *.rar
 hs_err_pid*
+
+application-local.yml
+build

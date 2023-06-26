@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="flab.commercemarket.product.mapper.ProductMapper">
+
+    <resultMap id="productResultMap" type="flab.commercemarket.product.domain.Product">
+        <id column="id" property="id"/>
+        <result column="product_name" property="productName"/>
+        <result column="price" property="price"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="description" property="description"/>
+        <result column="stock_amount" property="stockAmount"/>
+        <result column="sales_amount" property="salesAmount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="dislike_count" property="dislikeCount"/>
+        <result column="seller_id" property="sellerId"/>
+    </resultMap>
+
+    <insert id="insertProduct" parameterType="flab.commercemarket.product.domain.Product" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (product_name, price, image_url, description, stock_amount, seller_id)
+        VALUES (#{productName}, #{price}, #{imageUrl}, #{description}, #{stockAmount}, #{sellerId})
+    </insert>
+
+    <update id="updateProduct" parameterType="flab.commercemarket.product.domain.Product">
+        UPDATE product
+        SET
+            product_name = #{productName},
+            price = #{price},
+            image_url = #{imageUrl},
+            description = #{description},
+            stock_amount = #{stockAmount}
+        WHERE
+            id = #{id}
+    </update>
+
+    <select id="findById" parameterType="long" resultMap="productResultMap">
+        SELECT * FROM product where id = #{id}
+    </select>
+
+    <select id="findAll" parameterType="map" resultType="Product">
+        SELECT * FROM product LIMIT #{offset, jdbcType=INTEGER}, #{size, jdbcType=INTEGER}
+    </select>
+
+    <select id="searchProduct" parameterType="String" resultMap="productResultMap">
+        SELECT * FROM product
+        WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
+    <delete id="deleteProduct" parameterType="long">
+        DELETE FROM product where id = #{id}
+    </delete>
+</mapper>
