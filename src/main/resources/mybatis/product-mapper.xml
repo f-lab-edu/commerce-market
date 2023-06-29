@@ -3,27 +3,18 @@
 <mapper namespace="flab.commercemarket.product.mapper.ProductMapper">
 
     <resultMap id="productResultMap" type="flab.commercemarket.product.domain.Product">
-        <id column="id" property="id"/>
-        <result column="product_name" property="productName"/>
-        <result column="price" property="price"/>
-        <result column="image_url" property="imageUrl"/>
-        <result column="description" property="description"/>
-        <result column="stock_amount" property="stockAmount"/>
-        <result column="sales_amount" property="salesAmount"/>
-        <result column="like_count" property="likeCount"/>
-        <result column="dislike_count" property="dislikeCount"/>
-        <result column="seller_id" property="sellerId"/>
+        <result column="product_name" property="name"/>
     </resultMap>
 
     <insert id="insertProduct" parameterType="flab.commercemarket.product.domain.Product" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO product (product_name, price, image_url, description, stock_amount, seller_id)
-        VALUES (#{productName}, #{price}, #{imageUrl}, #{description}, #{stockAmount}, #{sellerId})
+        VALUES (#{name}, #{price}, #{imageUrl}, #{description}, #{stockAmount}, #{sellerId})
     </insert>
 
     <update id="updateProduct" parameterType="flab.commercemarket.product.domain.Product">
         UPDATE product
         SET
-            product_name = #{productName},
+            product_name = #{name},
             price = #{price},
             image_url = #{imageUrl},
             description = #{description},
@@ -36,13 +27,12 @@
         SELECT * FROM product where id = #{id}
     </select>
 
-    <select id="findAll" parameterType="map" resultType="Product">
+    <select id="findAll" parameterType="map" resultMap="productResultMap">
         SELECT * FROM product LIMIT #{offset, jdbcType=INTEGER}, #{size, jdbcType=INTEGER}
     </select>
 
     <select id="searchProduct" parameterType="String" resultMap="productResultMap">
-        SELECT * FROM product
-        WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
+        SELECT * FROM product WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
     </select>
 
     <delete id="deleteProduct" parameterType="long">

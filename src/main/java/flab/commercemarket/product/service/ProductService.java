@@ -24,25 +24,27 @@ public class ProductService {
     }
 
     public Product updateProduct(long id, Product data) {
-        Product findProduct = findVerifiedProduct(id);
-        findProduct.setProductName(data.getProductName() == null ? findProduct.getProductName() : data.getProductName());
-        findProduct.setPrice(data.getPrice() == 0 ? findProduct.getPrice() : data.getPrice());
-        findProduct.setImageUrl(data.getImageUrl() == null ? findProduct.getImageUrl() : data.getImageUrl());
-        findProduct.setDescription(data.getDescription() == null ? findProduct.getDescription() : data.getDescription());
-        findProduct.setStockAmount(data.getStockAmount() == 0 ? findProduct.getStockAmount() : data.getStockAmount());
+        // todo 요청으로 넘어오는 data에 null 값이 없는지 체크하는 로직이 필요합니다.
 
-        productMapper.updateProduct(findProduct);
-        return findProduct;
+        Product foundProduct = getVerifiedProduct(id);
+        foundProduct.setName(data.getName());
+        foundProduct.setPrice(data.getPrice());
+        foundProduct.setImageUrl(data.getImageUrl());
+        foundProduct.setDescription(data.getDescription());
+        foundProduct.setStockAmount(data.getStockAmount());
+
+        productMapper.updateProduct(foundProduct);
+        return foundProduct;
     }
 
 
     public Product findProduct(long id) {
-        return findVerifiedProduct(id);
+        return getVerifiedProduct(id);
     }
 
     public List<Product> findProducts(int page) {
         int size = 10;
-        int offset = (page-1)*size;
+        int offset = (page - 1) * size;
 
         return productMapper.findAll(offset, size);
     }
@@ -52,11 +54,11 @@ public class ProductService {
     }
 
     public void deleteProduct(long id) {
-        findVerifiedProduct(id);
+        getVerifiedProduct(id);
         productMapper.deleteProduct(id);
     }
 
-    private Product findVerifiedProduct(Long id) {
+    private Product getVerifiedProduct(Long id) {
         Optional<Product> optionalProduct = productMapper.findById(id);
         return optionalProduct.orElseThrow(() -> new DataNotFoundException("조회한 상품 정보가 없음"));
     }

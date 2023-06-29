@@ -1,7 +1,6 @@
 package flab.commercemarket.product.mapper;
 
 import flab.commercemarket.product.domain.Product;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +29,7 @@ class ProductMapperTest {
 
         // given
         Product product = new Product();
-        product.setProductName("product1");
+        product.setName("product1");
         product.setPrice(1000);
         product.setImageUrl("url1");
         product.setDescription("description1");
@@ -48,7 +47,7 @@ class ProductMapperTest {
         // then
         assertThat(optionalProduct).isPresent();
         Product findProduct = optionalProduct.get();
-        assertThat(findProduct.getProductName()).isEqualTo(product.getProductName());
+        assertThat(findProduct.getName()).isEqualTo(product.getName());
     }
 
     @Test
@@ -56,7 +55,7 @@ class ProductMapperTest {
     void updateProductTest() {
         // 새로운 상품 객체 생성
         Product product = new Product();
-        product.setProductName("product1");
+        product.setName("product1");
         product.setPrice(1000);
         product.setImageUrl("url1");
         product.setDescription("description1");
@@ -69,7 +68,7 @@ class ProductMapperTest {
         // 업데이트할 상품 정보 설정
         Product updatedProduct = new Product();
         updatedProduct.setId(id);
-        updatedProduct.setProductName("updatedProduct");
+        updatedProduct.setName("updatedProduct");
         updatedProduct.setPrice(2000);
         updatedProduct.setImageUrl("updatedUrl");
         updatedProduct.setDescription("updatedDescription");
@@ -84,7 +83,7 @@ class ProductMapperTest {
         Product retrievedProduct = optionalProduct.get();
 
         assertNotNull(retrievedProduct);
-        assertEquals(updatedProduct.getProductName(), retrievedProduct.getProductName());
+        assertEquals(updatedProduct.getName(), retrievedProduct.getName());
         assertEquals(updatedProduct.getPrice(), retrievedProduct.getPrice());
         assertEquals(updatedProduct.getImageUrl(), retrievedProduct.getImageUrl());
         assertEquals(updatedProduct.getDescription(), retrievedProduct.getDescription());
@@ -98,7 +97,7 @@ class ProductMapperTest {
         List<Product> products = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             Product product = new Product();
-            product.setProductName("Product " + i);
+            product.setName("Product " + i);
             product.setPrice(1000 * i);
             product.setImageUrl("url " + i);
             product.setDescription("Description " + i);
@@ -115,7 +114,7 @@ class ProductMapperTest {
         for (int i = 0; i < size; i++) {
             Product expectedProduct = products.get(offset + i);
             Product retrievedProduct = retrievedProducts.get(i);
-            assertEquals(expectedProduct.getProductName(), retrievedProduct.getProductName());
+            assertEquals(expectedProduct.getName(), retrievedProduct.getName());
             assertEquals(expectedProduct.getPrice(), retrievedProduct.getPrice());
             assertEquals(expectedProduct.getImageUrl(), retrievedProduct.getImageUrl());
             assertEquals(expectedProduct.getDescription(), retrievedProduct.getDescription());
@@ -127,7 +126,7 @@ class ProductMapperTest {
     @DisplayName("키워드에 해당하는 상품을 검색하여 반환합니다")
     void searchProduct() {
         Product product1 = new Product();
-        product1.setProductName("Apple");
+        product1.setName("Apple");
         product1.setPrice(1000);
         product1.setImageUrl("url1");
         product1.setDescription("Description 1");
@@ -135,7 +134,7 @@ class ProductMapperTest {
         productMapper.insertProduct(product1);
 
         Product product2 = new Product();
-        product2.setProductName("Banana");
+        product2.setName("Banana");
         product2.setPrice(2000);
         product2.setImageUrl("url2");
         product2.setDescription("Description 2");
@@ -150,7 +149,7 @@ class ProductMapperTest {
 
         assertEquals(1, searchResults.size());
         Product retrievedProduct = searchResults.get(0);
-        assertEquals(product1.getProductName(), retrievedProduct.getProductName());
+        assertEquals(product1.getName(), retrievedProduct.getName());
         assertEquals(product1.getPrice(), retrievedProduct.getPrice());
         assertEquals(product1.getImageUrl(), retrievedProduct.getImageUrl());
         assertEquals(product1.getDescription(), retrievedProduct.getDescription());
@@ -162,7 +161,7 @@ class ProductMapperTest {
     void deleteProduct() {
         // 새로운 상품 객체 생성
         Product product = new Product();
-        product.setProductName("product1");
+        product.setName("product1");
         product.setPrice(1000);
         product.setImageUrl("url1");
         product.setDescription("description1");

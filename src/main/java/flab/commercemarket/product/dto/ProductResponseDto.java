@@ -3,12 +3,13 @@ package flab.commercemarket.product.dto;
 import lombok.*;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponseDto {
 
     private Long id;
-    private String productName;
+    private String name;
     private int price;
     private String imageUrl;
     private String description;

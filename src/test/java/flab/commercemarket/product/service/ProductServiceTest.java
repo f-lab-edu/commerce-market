@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
@@ -36,17 +35,20 @@ class ProductServiceTest {
     @DisplayName("상품 등록")
     public void registerProductTest() throws Exception {
         // given
-        Product product = new Product(1L, "product1", 1000, "url1", "description1", 1, 1, 1,1,2);
+        Product product = makeProductFixture(1);
 
         // when
         Product registerProduct = productService.registerProduct(product);
 
         // then
         assertThat(registerProduct).isNotNull();
-        assertThat(product.getProductName()).isEqualTo(registerProduct.getProductName());
+        assertThat(product.getName()).isEqualTo(registerProduct.getName());
         assertThat(product.getPrice()).isEqualTo(registerProduct.getPrice());
+        assertThat(product.getImageUrl()).isEqualTo(registerProduct.getImageUrl());
+        assertThat(product.getDescription()).isEqualTo(registerProduct.getDescription());
+        assertThat(product.getStockAmount()).isEqualTo(registerProduct.getStockAmount());
 
-        Mockito.verify(productMapper).insertProduct(product);
+        verify(productMapper).insertProduct(product);
     }
 
     @Test
@@ -54,8 +56,8 @@ class ProductServiceTest {
     public void updateProductTest() throws Exception {
         // given
         long productId = 1L;
-        Product existProduct = new Product(productId, "ExistingProduct", 1000, "Existing url", "Existing description", 1, 1, 1,1,2);
-        Product updatedProductData = new Product(productId, "UpdatedProduct", 2000, "Updated url", "Updated description", 2, 1, 1,1,2);
+        Product existProduct = makeProductFixture(1);
+        Product updatedProductData = makeProductFixture(2);
 
         // when
         when(productMapper.findById(productId)).thenReturn(Optional.of(existProduct));
@@ -63,7 +65,7 @@ class ProductServiceTest {
 
         // then
         assertThat(updateProduct).isNotNull();
-        assertThat(updatedProductData.getProductName()).isEqualTo(updateProduct.getProductName());
+        assertThat(updatedProductData.getName()).isEqualTo(updateProduct.getName());
         assertThat(updatedProductData.getPrice()).isEqualTo(updateProduct.getPrice());
         assertThat(updatedProductData.getImageUrl()).isEqualTo(updateProduct.getImageUrl());
         assertThat(updatedProductData.getDescription()).isEqualTo(updateProduct.getDescription());
@@ -78,7 +80,7 @@ class ProductServiceTest {
     public void updateProductTest_productNotFound() throws Exception {
         // given
         long productId = 1L;
-        Product updatedProductData = new Product(productId, "UpdatedProduct", 2000, "Updated url", "Updated description", 2, 1, 1,1,2);
+        Product updatedProductData = makeProductFixture(1);
 
         // when
         // productMapper.findById()가 호출될 때 동작 설정
@@ -93,10 +95,11 @@ class ProductServiceTest {
     @Test
     public void searchProductTest() throws Exception {
         // given
-        Product product1 = new Product(1L, "product1", 1000, "url1", "description1", 1,1,1,1,1);
-        Product product2 = new Product(2L, "product2", 2000, "url2", "description2", 1,1,1,1,1);
-        Product product3 = new Product(3L, "product3", 3000, "url3", "description3", 1,1,1,1,1);
-        Product product4 = new Product(4L, "TEST", 4000, "url3", "description3", 1,1,1,1,1);
+        Product product1 = makeProductFixture(1);
+        Product product2 = makeProductFixture(2);
+        Product product3 = makeProductFixture(3);
+        Product product4 = makeProductFixture(4);
+
         List<Product> expectedResults = Arrays.asList(product1,product2,product3);
 
         // when
@@ -111,7 +114,7 @@ class ProductServiceTest {
     public void deleteProductTest() throws Exception {
         // given
         long productId = 1;
-        Product existProduct = new Product(productId, "ExistingProduct", 1000, "Existing url", "Existing description", 1, 1, 1,1,2);
+        Product existProduct = makeProductFixture(1);
 
         // when
         when(productMapper.findById(productId)).thenReturn(Optional.of(existProduct));
@@ -119,5 +122,15 @@ class ProductServiceTest {
 
         // then
         verify(productMapper).deleteProduct(productId);
+    }
+
+    private Product makeProductFixture(int param) {
+        Product product = new Product();
+        product.setName("name"+param);
+        product.setPrice(param*1000);
+        product.setImageUrl("url" + param);
+        product.setDescription("description"+param);
+        product.setStockAmount(param*10);
+        return product;
     }
 }
