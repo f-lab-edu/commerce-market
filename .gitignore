@@ -1,4 +1,10 @@
 # Created by .ignore support plugin (hsz.mobi)
+# IntelliJ project files
+*.iml
+out
+gen
+build
+rebel.xml
 .gradle
 .idea
 ### Windows template
@@ -64,4 +70,3 @@ Temporary Items
 hs_err_pid*
 
 application-local.yml
-build
