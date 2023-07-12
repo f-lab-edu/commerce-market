@@ -3,7 +3,6 @@ package flab.commercemarket.cart.dto;
 import lombok.*;
 
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

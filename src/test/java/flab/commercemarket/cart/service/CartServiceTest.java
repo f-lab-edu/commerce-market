@@ -5,6 +5,7 @@ import flab.commercemarket.cart.mapper.CartMapper;
 import flab.commercemarket.exception.DataNotFoundException;
 import flab.commercemarket.exception.DuplicateDataException;
 import flab.commercemarket.exception.ForbiddenException;
+import flab.commercemarket.helper.AuthorizationHelper;
 import flab.commercemarket.product.domain.Product;
 import flab.commercemarket.product.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -29,6 +31,9 @@ class CartServiceTest {
 
     @Mock
     private ProductService productService;
+
+    @Mock
+    private AuthorizationHelper authorizationHelper;
 
     @InjectMocks
     private CartService cartService;
@@ -165,7 +170,7 @@ class CartServiceTest {
     }
 
     @Test
-    @DisplayName("인증된 user와 장바구니에 저정되어있는 user 정보가 다르면 예외를 발생시킨디ㅏ.")
+    @DisplayName("인증된 user와 장바구니에 저정되어있는 user 정보가 다르면 예외를 발생시킨다.")
     public void updateCartTest_unauthorizedUser() throws Exception {
         // given
         long userId = 1L;
@@ -179,6 +184,8 @@ class CartServiceTest {
         long deniedUserId = 2L;
         Cart data = new Cart(deniedUserId, productId, 2);
         data.setId(cartId);
+
+        doThrow(new ForbiddenException("유저 권한 정보가 일치하지 않음")).when(authorizationHelper).checkUserAuthorization(userId, deniedUserId);
 
         assertThrows(ForbiddenException.class, () -> {
             cartService.updateCart(data, cartId, deniedUserId);

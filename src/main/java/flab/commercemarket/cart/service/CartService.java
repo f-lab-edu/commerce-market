@@ -5,44 +5,52 @@ import flab.commercemarket.cart.mapper.CartMapper;
 import flab.commercemarket.exception.DataNotFoundException;
 import flab.commercemarket.exception.DuplicateDataException;
 import flab.commercemarket.exception.ForbiddenException;
+import flab.commercemarket.helper.AuthorizationHelper;
 import flab.commercemarket.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CartService {
     private final CartMapper cartMapper;
     private final ProductService productService;
+    private final AuthorizationHelper authorizationHelper;
 
     public Cart registerCart(Cart data, long userId) {
-        checkUserAuthorization(data.getUserId(), userId);
+        authorizationHelper.checkUserAuthorization(data.getUserId(), userId);
         validateUserAndProductExistence(data);
         checkDuplicateCartItem(userId, data.getProductId());
-
         cartMapper.createCart(data);
+
+        log.info("Create cart. {}", data);
         return data;
     }
 
     public Cart updateCart(Cart data, long cartId, long userId) {
         Cart foundCart = verifiedCart(cartId);
-        checkUserAuthorization(foundCart.getUserId(), userId);
+        authorizationHelper.checkUserAuthorization(foundCart.getUserId(), userId);
 
         // userID와 productId는 수정되면 안된다. -> foundCart 값을 그대로 입력
         foundCart.setUserId(foundCart.getUserId());
         foundCart.setProductId(foundCart.getProductId());
         foundCart.setQuantity(data.getQuantity());
         cartMapper.updateCart(foundCart);
+
+        log.info("Update cart. {}", foundCart);
         return foundCart;
     }
 
     public List<Cart> getCarts(long userId) {
         // todo 테이블의 모든 항목을 쿼리해온다. -> 성능이슈 예상
         // todo 페이징 처리 등 개선방법 생각해보기
+        log.info("GetCarts, userId = {}", userId);
         return cartMapper.findAll(userId);
     }
 
@@ -54,6 +62,7 @@ public class CartService {
         }
 
         cartMapper.deleteCart(cartId);
+        log.info("Delete Cart. cartId = {}", cartId);
     }
 
     public int calculateTotalPrice(long userId) {
@@ -69,6 +78,8 @@ public class CartService {
             int price = productService.findProduct(productId).getPrice();
             sum += quantity * price;
         }
+
+        log.info("Calculate cart's total price");
         return sum;
     }
 
@@ -77,15 +88,8 @@ public class CartService {
         return optionalCart.orElseThrow(() -> new DataNotFoundException("조회한 장바구니 정보가 없음"));
     }
 
-    private void checkUserAuthorization(long cartUserId, long loginUserId) {
-        if (cartUserId != loginUserId) {
-            throw new ForbiddenException("유저권한정보가 일치하지 않음");
-        }
-    }
-
     private void validateUserAndProductExistence(Cart data) {
         productService.getVerifiedProduct(data.getProductId());
-//        userService.getVerifiedUser(data.getUserId());
     }
 
     private void checkDuplicateCartItem(long userId, long productId) {
