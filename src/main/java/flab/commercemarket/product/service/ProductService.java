@@ -58,7 +58,7 @@ public class ProductService {
         productMapper.deleteProduct(id);
     }
 
-    private Product getVerifiedProduct(Long id) {
+    public Product getVerifiedProduct(long id) {
         Optional<Product> optionalProduct = productMapper.findById(id);
         return optionalProduct.orElseThrow(() -> new DataNotFoundException("조회한 상품 정보가 없음"));
     }

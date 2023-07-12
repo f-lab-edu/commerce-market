@@ -2,8 +2,9 @@ package flab.commercemarket.product.dto;
 
 import lombok.*;
 
-@Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponseDto {
