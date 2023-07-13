@@ -24,6 +24,8 @@ public class CartService {
     private final AuthorizationHelper authorizationHelper;
 
     public Cart registerCart(Cart data, long userId) {
+        log.info("Start registerCart");
+
         authorizationHelper.checkUserAuthorization(data.getUserId(), userId);
         validateUserAndProductExistence(data);
         checkDuplicateCartItem(userId, data.getProductId());
@@ -34,6 +36,8 @@ public class CartService {
     }
 
     public Cart updateCart(Cart data, long cartId, long userId) {
+        log.info("Start updateCart");
+
         Cart foundCart = verifiedCart(cartId);
         authorizationHelper.checkUserAuthorization(foundCart.getUserId(), userId);
 
@@ -48,6 +52,8 @@ public class CartService {
     }
 
     public List<Cart> getCarts(long userId) {
+        log.info("Start getCarts");
+
         // todo 테이블의 모든 항목을 쿼리해온다. -> 성능이슈 예상
         // todo 페이징 처리 등 개선방법 생각해보기
         log.info("GetCarts, userId = {}", userId);
@@ -56,6 +62,8 @@ public class CartService {
 
 
     public void deleteCart(long cartId, long userId) {
+        log.info("Start deleteCart");
+
         Cart cart = verifiedCart(cartId);
         if (cart.getUserId() != userId) {
             throw new ForbiddenException("유저 권한정보가 일치하지 않음");
@@ -66,6 +74,8 @@ public class CartService {
     }
 
     public int calculateTotalPrice(long userId) {
+        log.info("Start calculateTotalPrice");
+
         List<Cart> carts = getCarts(userId);
 
         int sum = 0;
@@ -85,7 +95,10 @@ public class CartService {
 
     private Cart verifiedCart(long cartId) {
         Optional<Cart> optionalCart = cartMapper.findById(cartId);
-        return optionalCart.orElseThrow(() -> new DataNotFoundException("조회한 장바구니 정보가 없음"));
+        return optionalCart.orElseThrow(() -> {
+            log.info("cartId = {}", cartId);
+            return new DataNotFoundException("조회한 장바구니 정보가 없음");
+        });
     }
 
     private void validateUserAndProductExistence(Cart data) {
@@ -94,6 +107,7 @@ public class CartService {
 
     private void checkDuplicateCartItem(long userId, long productId) {
         if (cartMapper.checkCartExistence(userId, productId)) {
+            log.info("userId = {}, productId = {}", userId, productId);
             throw new DuplicateDataException("이미 장바구니에 담긴 상품");
         }
     }
