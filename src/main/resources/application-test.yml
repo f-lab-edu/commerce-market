@@ -5,8 +5,8 @@ spring:
     password:
     driver-class-name: org.h2.Driver
 
-#mybatis:
-#  type-aliases-package: flab.commercemarket
-#  mapper-locations: mybatis/**/*.xml
-#  configuration:
-#    map-underscore-to-camel-case: true
+mybatis:
+  type-aliases-package: flab.commercemarket
+  mapper-locations: mybatis/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
