@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -79,5 +81,40 @@ public class ProductService {
             log.info("productId = {}", id);
             return new DataNotFoundException("조회한 상품 정보가 없음");
         });
+    }
+
+    public void updateLikeCount(long productId, String feedback) {
+        log.info("Start updateLikeCount");
+        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+
+    }
+
+    private void increaseLikeCount(long productId) {
+        log.info("Start increaseLikeCount");
+        Product product = findProduct(productId);
+        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+
+        int likeCount = product.getLikeCount();
+        int newLikeCount = likeCount + 1;
+
+        product.setLikeCount(newLikeCount);
+        productMapper.updateLikeCount(product);
+
+        log.info("New LikeCount = {}", newLikeCount);
+
+    }
+
+    private void decreaseLikeCount(long productId) {
+        log.info("Start decreaseLikeCount");
+        Product product = findProduct(productId);
+        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+
+        int dislikeCount = product.getDislikeCount();
+        int newDislikeCount = dislikeCount + 1;
+
+        product.setDislikeCount(newDislikeCount);
+        productMapper.updateDislikeCount(product);
+
+        log.info("New LikeCount = {}", newDislikeCount);
     }
 }
