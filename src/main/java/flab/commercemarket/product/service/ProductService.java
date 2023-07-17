@@ -2,8 +2,6 @@ package flab.commercemarket.product.service;
 
 import flab.commercemarket.exception.DataNotFoundException;
 import flab.commercemarket.product.domain.Product;
-import flab.commercemarket.product.like.DisLike;
-import flab.commercemarket.product.like.Like;
 import flab.commercemarket.product.like.LikeStrategy;
 import flab.commercemarket.product.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
@@ -88,17 +86,31 @@ public class ProductService {
         log.info("Start updateLikeCount");
         // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
 
-        Product product = findProduct(productId);
+        Product currentProduct = findProduct(productId);
         LikeStrategy strategy;
 
         if (feedback.equals("like")) {
-            strategy = new Like(productMapper);
+            strategy = product -> {
+                int currentLikeCount = product.getLikeCount();
+                int newLikeCount = currentLikeCount + 1;
+                product.setLikeCount(newLikeCount);
+                productMapper.updateLikeCount(product);
+
+                log.info("New LikeCount = {}", newLikeCount);
+            };
         } else if (feedback.equals("dislike")) {
-            strategy = new DisLike(productMapper);
+            strategy = product -> {
+                int currentDislikeCount = product.getDislikeCount();
+                int newDislikeCount = currentDislikeCount + 1;
+                product.setDislikeCount(newDislikeCount);
+                productMapper.updateDislikeCount(product);
+
+                log.info("New DislikeCount = {}", newDislikeCount);
+            };
         } else {
             throw new IllegalArgumentException("Unrecognized feedback: " + feedback);
         }
 
-        strategy.updateLikeCount(product);
+        strategy.updateLikeCount(currentProduct);
     }
 }
