@@ -2,6 +2,9 @@ package flab.commercemarket.product.service;
 
 import flab.commercemarket.exception.DataNotFoundException;
 import flab.commercemarket.product.domain.Product;
+import flab.commercemarket.product.like.DisLike;
+import flab.commercemarket.product.like.Like;
+import flab.commercemarket.product.like.LikeStrategy;
 import flab.commercemarket.product.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -87,34 +88,17 @@ public class ProductService {
         log.info("Start updateLikeCount");
         // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
 
-    }
-
-    private void increaseLikeCount(long productId) {
-        log.info("Start increaseLikeCount");
         Product product = findProduct(productId);
-        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+        LikeStrategy strategy;
 
-        int likeCount = product.getLikeCount();
-        int newLikeCount = likeCount + 1;
+        if (feedback.equals("like")) {
+            strategy = new Like(productMapper);
+        } else if (feedback.equals("dislike")) {
+            strategy = new DisLike(productMapper);
+        } else {
+            throw new IllegalArgumentException("Unrecognized feedback: " + feedback);
+        }
 
-        product.setLikeCount(newLikeCount);
-        productMapper.updateLikeCount(product);
-
-        log.info("New LikeCount = {}", newLikeCount);
-
-    }
-
-    private void decreaseLikeCount(long productId) {
-        log.info("Start decreaseLikeCount");
-        Product product = findProduct(productId);
-        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
-
-        int dislikeCount = product.getDislikeCount();
-        int newDislikeCount = dislikeCount + 1;
-
-        product.setDislikeCount(newDislikeCount);
-        productMapper.updateDislikeCount(product);
-
-        log.info("New LikeCount = {}", newDislikeCount);
+        strategy.updateLikeCount(product);
     }
 }
