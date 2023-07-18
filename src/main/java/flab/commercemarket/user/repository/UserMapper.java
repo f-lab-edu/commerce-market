@@ -7,7 +7,6 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 import java.util.Optional;
 
-//@Repository
 @Mapper
 public interface UserMapper {
 

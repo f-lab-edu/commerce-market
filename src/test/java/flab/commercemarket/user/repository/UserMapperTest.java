@@ -27,9 +27,9 @@ class UserMapperTest {
 
         //when
         int insertedRowCnt = userMapper.save(user);
-        System.out.println(user.getId());
 
         //then
+        assertThat(userMapper.findById(user.getId())).isPresent();
         User foundUser = userMapper.findById(user.getId()).get();
         assertThat(foundUser).isEqualTo(user);
     }
@@ -45,7 +45,9 @@ class UserMapperTest {
         userMapper.save(user2);
 
         //when
+        assertThat(userMapper.findByUsername(user1.getUsername())).isPresent();
         User foundUser1 = userMapper.findByUsername(user1.getUsername()).get();
+        assertThat(userMapper.findByUsername(user2.getUsername())).isPresent();
         User foundUser2 = userMapper.findByUsername(user2.getUsername()).get();
 
         //then
@@ -83,6 +85,7 @@ class UserMapperTest {
 
         //when
         int updatedRowCnt = userMapper.update(user1.getId(), userForUpdate);
+        assertThat(userMapper.findByUsername(userForUpdate.getUsername())).isPresent();
         User updatedUser = userMapper.findByUsername(userForUpdate.getUsername()).get();
         userForUpdate.setId(updatedUser.getId());
 
@@ -100,6 +103,8 @@ class UserMapperTest {
         int savedRowCnt2 = userMapper.save(user2);
 
         //when
+        assertThat(userMapper.findByNameAndUsername(
+                user1.getName(), user1.getUsername())).isPresent();
         User foundUser = userMapper.findByNameAndUsername(
                 user1.getName(), user1.getUsername()).get();
 
@@ -116,6 +121,7 @@ class UserMapperTest {
         int savedRowCnt = userMapper.save(user1);
 
         //when
+        assertThat(userMapper.findByUsername(user1.getUsername())).isPresent();
         User savedUser = userMapper.findByUsername(user1.getUsername()).get();
         userMapper.delete(savedUser.getId());
 
