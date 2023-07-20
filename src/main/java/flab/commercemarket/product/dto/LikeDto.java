@@ -7,5 +7,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LikeDto {
     long productId;
-    String feedback;
 }

@@ -2,7 +2,6 @@ package flab.commercemarket.product.service;
 
 import flab.commercemarket.exception.DataNotFoundException;
 import flab.commercemarket.product.domain.Product;
-import flab.commercemarket.product.like.LikeStrategy;
 import flab.commercemarket.product.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,35 +81,17 @@ public class ProductService {
         });
     }
 
-    public void updateLikeCount(long productId, String feedback) {
-        log.info("Start updateLikeCount");
+    public void updateLikeCount(long productId) {
+        log.info("Start increaseLikeCount");
+        Product product = findProduct(productId);
         // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
 
-        Product currentProduct = findProduct(productId);
-        LikeStrategy strategy;
+        int likeCount = product.getLikeCount();
+        int newLikeCount = likeCount + 1;
 
-        if (feedback.equals("like")) {
-            strategy = product -> {
-                int currentLikeCount = product.getLikeCount();
-                int newLikeCount = currentLikeCount + 1;
-                product.setLikeCount(newLikeCount);
-                productMapper.updateLikeCount(product);
+        product.setLikeCount(newLikeCount);
+        productMapper.updateLikeCount(product);
 
-                log.info("New LikeCount = {}", newLikeCount);
-            };
-        } else if (feedback.equals("dislike")) {
-            strategy = product -> {
-                int currentDislikeCount = product.getDislikeCount();
-                int newDislikeCount = currentDislikeCount + 1;
-                product.setDislikeCount(newDislikeCount);
-                productMapper.updateDislikeCount(product);
-
-                log.info("New DislikeCount = {}", newDislikeCount);
-            };
-        } else {
-            throw new IllegalArgumentException("Unrecognized feedback: " + feedback);
-        }
-
-        strategy.updateLikeCount(currentProduct);
+        log.info("New LikeCount = {}", newLikeCount);
     }
 }

@@ -128,44 +128,14 @@ class ProductServiceTest {
     public void updateLikeCountTest_Like() throws Exception {
         // given
         long productId = 123L;
-        String feedback = "like";
         Product product = new Product();
         product.setLikeCount(10);
 
 
         when(productMapper.findById(productId)).thenReturn(Optional.of(product));
-        productService.updateLikeCount(productId, feedback);
+        productService.updateLikeCount(productId);
 
         assertThat(11).isEqualTo(product.getLikeCount());
-    }
-
-    @Test
-    public void updateLikeCountTest_Dislike() throws Exception {
-        // given
-        long productId = 123L;
-        String feedback = "dislike";
-        Product product = new Product();
-        product.setDislikeCount(1);
-
-        // when
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
-        productService.updateLikeCount(productId, feedback);
-
-        // then
-        assertThat(2).isEqualTo(product.getDislikeCount());
-    }
-
-    @Test
-    @DisplayName("feedback이 like 또는 dislike가 아니면 예외를 발생시킨다.")
-    public void update_likeCount_throw_exception() throws Exception {
-        // given
-        long productId = 1L;
-        String feedback = "exception";
-        Product product = makeProductFixture((int)productId);
-
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
-
-        assertThrows(IllegalArgumentException.class, () -> productService.updateLikeCount(productId, feedback));
     }
 
     private Product makeProductFixture(int param) {

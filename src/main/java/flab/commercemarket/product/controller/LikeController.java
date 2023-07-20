@@ -14,7 +14,7 @@ public class LikeController {
 
     @PostMapping("/likes")
     public void postLike(@RequestBody LikeDto likeDto) {
-        productService.updateLikeCount(likeDto.getProductId(), likeDto.getFeedback());
+        productService.updateLikeCount(likeDto.getProductId());
     }
 }
 
