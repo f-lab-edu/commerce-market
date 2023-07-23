@@ -24,6 +24,4 @@ public interface ProductMapper {
     void deleteProduct(long id);
 
     void updateLikeCount(Product product);
-
-    void updateDislikeCount(Product product);
 }
