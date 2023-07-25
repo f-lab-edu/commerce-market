@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="flab.commercemarket.user.repository.UserMapper">
+
+    <resultMap id="userResultMap" type="flab.commercemarket.user.domain.User">
+        <result property="phoneNumber" column="phone_number"/>
+    </resultMap>
+
+    <insert id="save" parameterType="flab.commercemarket.user.domain.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO market_user (username, password, name, address, phone_number, email)
+        VALUES (#{username}, #{password}, #{name}, #{address}, #{phoneNumber}, #{email})
+    </insert>
+
+    <select id="findById" parameterType="long" resultMap="userResultMap">
+        SELECT * FROM market_user WHERE id = #{id}
+    </select>
+
+    <select id="findByNameAndUsername" parameterType="map" resultMap="userResultMap">
+        SELECT * FROM market_user WHERE username = #{username} AND name = #{name}
+    </select>
+
+    <select id="findByUsername" parameterType="String" resultMap="userResultMap">
+        SELECT * FROM market_user WHERE username = #{username}
+    </select>
+
+    <select id="findAll" resultMap="userResultMap">
+        SELECT * FROM market_user
+    </select>
+
+    <update id="update">
+        UPDATE market_user
+        SET
+        username = #{user.username},
+        password = #{user.password},
+        name = #{user.name},
+        address = #{user.address},
+        phone_number = #{user.phoneNumber},
+        email = #{user.email}
+        WHERE
+        id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="long">
+        DELETE FROM market_user WHERE id = #{id}
+    </delete>
+</mapper>

@@ -1,1 +1,5 @@
-
+# console color on
+spring:
+  output:
+    ansi:
+      enabled: always
