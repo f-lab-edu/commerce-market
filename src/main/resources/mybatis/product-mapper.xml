@@ -38,4 +38,12 @@
     <delete id="deleteProduct" parameterType="long">
         DELETE FROM product where id = #{id}
     </delete>
+
+    <update id="updateLikeCount" parameterType="flab.commercemarket.product.domain.Product">
+        UPDATE
+            product
+        SET
+            like_count = #{likeCount}
+        WHERE id = #{id}
+    </update>
 </mapper>

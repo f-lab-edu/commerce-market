@@ -16,8 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ProductServiceTest {
     @Mock
@@ -122,6 +121,21 @@ class ProductServiceTest {
 
         // then
         verify(productMapper).deleteProduct(productId);
+    }
+
+    @Test
+    @DisplayName("feedback이 like면 Product의 likeCount가 1 증가한다")
+    public void updateLikeCountTest_Like() throws Exception {
+        // given
+        long productId = 123L;
+        Product product = new Product();
+        product.setLikeCount(10);
+
+
+        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
+        productService.updateLikeCount(productId);
+
+        assertThat(11).isEqualTo(product.getLikeCount());
     }
 
     private Product makeProductFixture(int param) {

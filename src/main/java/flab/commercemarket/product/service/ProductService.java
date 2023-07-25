@@ -80,4 +80,18 @@ public class ProductService {
             return new DataNotFoundException("조회한 상품 정보가 없음");
         });
     }
+
+    public void updateLikeCount(long productId) {
+        log.info("Start increaseLikeCount");
+        Product product = findProduct(productId);
+        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+
+        int likeCount = product.getLikeCount();
+        int newLikeCount = likeCount + 1;
+
+        product.setLikeCount(newLikeCount);
+        productMapper.updateLikeCount(product);
+
+        log.info("New LikeCount = {}", newLikeCount);
+    }
 }
