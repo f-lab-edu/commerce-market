@@ -60,9 +60,4 @@ public class ProductController {
     public void deleteProduct(@PathVariable("productId") long productId) {
         productService.deleteProduct(productId);
     }
-
-    @PostMapping("/{productId}/likes")
-    public void postLike(@PathVariable("productId") long productId) {
-        productService.updateLikeCount(productId);
-    }
 }

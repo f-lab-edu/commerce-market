@@ -28,9 +28,6 @@ public class Product {
                 .imageUrl(imageUrl)
                 .description(description)
                 .stockAmount(stockAmount)
-                .salesAmount(salesAmount)
-                .likeCount(likeCount)
-                .dislikeCount(dislikeCount)
                 .build();
     }
 }

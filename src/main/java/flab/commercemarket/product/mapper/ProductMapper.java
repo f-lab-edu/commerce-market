@@ -22,6 +22,4 @@ public interface ProductMapper {
     List<Product> searchProduct(String keyword);
 
     void deleteProduct(long id);
-
-    void updateLikeCount(Product product);
 }
