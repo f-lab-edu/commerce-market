@@ -33,6 +33,9 @@ class UserServiceTest {
         User user = makeUserFixture(1);
 
         //when
+        when(userMapper.save(user)).thenReturn(1);
+        user.setId(1L);
+        when(userMapper.findByNameAndUsername(user.getName(), user.getUsername())).thenReturn(Optional.of(user));
         User savedUser = userService.join(user);
 
         //then

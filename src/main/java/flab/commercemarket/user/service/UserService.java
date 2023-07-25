@@ -19,7 +19,6 @@ public class UserService {
 
     private final UserMapper userMapper;
 
-    // 회원 가입
     public User join(User user) {
         log.info("Start join User");
 
@@ -30,7 +29,6 @@ public class UserService {
         return user;
     }
 
-    // 전체 회원 조회
     public List<User> findUsers() {
         log.info("Start findUsers");
 
@@ -40,7 +38,6 @@ public class UserService {
         return foundUsers;
     }
 
-    // 유저 찾기
     public User getUser(String name, String username) {
         log.info("Start getUserByNameAndUsername");
 
@@ -55,7 +52,6 @@ public class UserService {
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
     }
 
-    // 유저 업데이트
     public User updateOne(Long id, User userForUpdate) {
         log.info("Start update User");
 
@@ -67,7 +63,6 @@ public class UserService {
         return userForUpdate;
     }
 
-    // 유저 삭제
     public void deleteOne(Long id) {
         log.info("Start delete User");
 
