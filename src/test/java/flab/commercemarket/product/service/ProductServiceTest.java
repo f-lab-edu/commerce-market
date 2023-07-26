@@ -1,8 +1,9 @@
 package flab.commercemarket.product.service;
 
-import flab.commercemarket.exception.DataNotFoundException;
-import flab.commercemarket.product.domain.Product;
-import flab.commercemarket.product.mapper.ProductMapper;
+import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.domain.product.ProductService;
+import flab.commercemarket.domain.product.mapper.ProductMapper;
+import flab.commercemarket.domain.product.vo.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ProductServiceTest {
     @Mock

@@ -1,13 +1,14 @@
 package flab.commercemarket.cart.service;
 
-import flab.commercemarket.cart.domain.Cart;
-import flab.commercemarket.cart.mapper.CartMapper;
-import flab.commercemarket.exception.DataNotFoundException;
-import flab.commercemarket.exception.DuplicateDataException;
-import flab.commercemarket.exception.ForbiddenException;
-import flab.commercemarket.helper.AuthorizationHelper;
-import flab.commercemarket.product.domain.Product;
-import flab.commercemarket.product.service.ProductService;
+import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.exception.DuplicateDataException;
+import flab.commercemarket.common.exception.ForbiddenException;
+import flab.commercemarket.common.helper.AuthorizationHelper;
+import flab.commercemarket.domain.cart.CartService;
+import flab.commercemarket.domain.cart.mapper.CartMapper;
+import flab.commercemarket.domain.cart.vo.Cart;
+import flab.commercemarket.domain.product.ProductService;
+import flab.commercemarket.domain.product.vo.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 

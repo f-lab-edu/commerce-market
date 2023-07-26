@@ -1,6 +1,7 @@
 package flab.commercemarket.user.repository;
 
-import flab.commercemarket.user.domain.User;
+import flab.commercemarket.domain.user.mapper.UserMapper;
+import flab.commercemarket.domain.user.vo.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

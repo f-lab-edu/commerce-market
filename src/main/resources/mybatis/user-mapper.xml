@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="flab.commercemarket.user.repository.UserMapper">
+<mapper namespace="flab.commercemarket.domain.user.mapper.UserMapper">
 
-    <resultMap id="userResultMap" type="flab.commercemarket.user.domain.User">
+    <resultMap id="userResultMap" type="flab.commercemarket.domain.user.vo.User">
         <result property="phoneNumber" column="phone_number"/>
     </resultMap>
 
-    <insert id="save" parameterType="flab.commercemarket.user.domain.User" useGeneratedKeys="true" keyProperty="id">
+    <insert id="save" parameterType="flab.commercemarket.domain.user.vo.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO market_user (username, password, name, address, phone_number, email)
         VALUES (#{username}, #{password}, #{name}, #{address}, #{phoneNumber}, #{email})
     </insert>
