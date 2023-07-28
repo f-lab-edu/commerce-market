@@ -1,8 +1,9 @@
 package flab.commercemarket.user.service;
 
-import flab.commercemarket.exception.DataNotFoundException;
-import flab.commercemarket.user.domain.User;
-import flab.commercemarket.user.repository.UserMapper;
+import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.mapper.UserMapper;
+import flab.commercemarket.domain.user.vo.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

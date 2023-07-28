@@ -1,10 +1,11 @@
 package flab.commercemarket.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import flab.commercemarket.user.domain.User;
-import flab.commercemarket.user.dto.UserDto;
-import flab.commercemarket.user.dto.UserResponseDto;
-import flab.commercemarket.user.service.UserService;
+import flab.commercemarket.controller.user.UserController;
+import flab.commercemarket.controller.user.dto.UserDto;
+import flab.commercemarket.controller.user.dto.UserResponseDto;
+import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.vo.User;
 import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
 import org.junit.jupiter.api.BeforeEach;

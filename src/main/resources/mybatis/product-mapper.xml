@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="flab.commercemarket.product.mapper.ProductMapper">
+<mapper namespace="flab.commercemarket.domain.product.mapper.ProductMapper">
 
-    <resultMap id="productResultMap" type="flab.commercemarket.product.domain.Product">
+    <resultMap id="productResultMap" type="flab.commercemarket.domain.product.vo.Product">
         <result column="product_name" property="name"/>
     </resultMap>
 
-    <insert id="insertProduct" parameterType="flab.commercemarket.product.domain.Product" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insertProduct" parameterType="flab.commercemarket.domain.product.vo.Product" useGeneratedKeys="true"
+            keyProperty="id">
         INSERT INTO product (product_name, price, image_url, description, stock_amount, seller_id)
         VALUES (#{name}, #{price}, #{imageUrl}, #{description}, #{stockAmount}, #{sellerId})
     </insert>
 
-    <update id="updateProduct" parameterType="flab.commercemarket.product.domain.Product">
+    <update id="updateProduct" parameterType="flab.commercemarket.domain.product.vo.Product">
         UPDATE product
         SET
-            product_name = #{name},
-            price = #{price},
-            image_url = #{imageUrl},
-            description = #{description},
-            stock_amount = #{stockAmount}
+        product_name = #{name},
+        price = #{price},
+        image_url = #{imageUrl},
+        description = #{description},
+        stock_amount = #{stockAmount}
         WHERE
-            id = #{id}
+        id = #{id}
     </update>
 
     <select id="findById" parameterType="long" resultMap="productResultMap">
@@ -39,11 +40,11 @@
         DELETE FROM product where id = #{id}
     </delete>
 
-    <update id="updateLikeCount" parameterType="flab.commercemarket.product.domain.Product">
+    <update id="updateLikeCount" parameterType="flab.commercemarket.domain.product.vo.Product">
         UPDATE
-            product
+        product
         SET
-            like_count = #{likeCount}
+        like_count = #{likeCount}
         WHERE id = #{id}
     </update>
 </mapper>

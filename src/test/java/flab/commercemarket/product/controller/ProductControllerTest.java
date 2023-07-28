@@ -1,10 +1,11 @@
 package flab.commercemarket.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import flab.commercemarket.product.domain.Product;
-import flab.commercemarket.product.dto.ProductDto;
-import flab.commercemarket.product.dto.ProductResponseDto;
-import flab.commercemarket.product.service.ProductService;
+import flab.commercemarket.controller.product.ProductController;
+import flab.commercemarket.controller.product.dto.ProductDto;
+import flab.commercemarket.controller.product.dto.ProductResponseDto;
+import flab.commercemarket.domain.product.ProductService;
+import flab.commercemarket.domain.product.vo.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -17,10 +18,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ProductControllerTest {
 

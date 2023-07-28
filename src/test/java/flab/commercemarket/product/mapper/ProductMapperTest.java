@@ -1,6 +1,7 @@
 package flab.commercemarket.product.mapper;
 
-import flab.commercemarket.product.domain.Product;
+import flab.commercemarket.domain.product.mapper.ProductMapper;
+import flab.commercemarket.domain.product.vo.Product;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
