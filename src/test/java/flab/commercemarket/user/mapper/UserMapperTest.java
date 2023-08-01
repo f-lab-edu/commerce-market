@@ -1,7 +1,10 @@
-package flab.commercemarket.user.repository;
+package flab.commercemarket.user.mapper;
 
+import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.domain.user.mapper.UserMapper;
+import flab.commercemarket.domain.user.vo.Authority;
 import flab.commercemarket.domain.user.vo.User;
+import flab.commercemarket.domain.user.vo.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = "spring.config.name=application-local")
+@SpringBootTest(properties = "spring.config.name=application-test")
 @Transactional
 class UserMapperTest {
 
@@ -33,6 +36,39 @@ class UserMapperTest {
         assertThat(userMapper.findById(user.getId())).isPresent();
         User foundUser = userMapper.findById(user.getId()).get();
         assertThat(foundUser).isEqualTo(user);
+    }
+
+    @Test
+    @DisplayName("유저 권한 추가")
+    void saveUserRole() {
+        //given
+        User user = makeJoinedUserFixture(1);
+        //when
+        UserRole userRole = new UserRole(user.getId(), Authority.BUYER.getAuthorityValue());
+        int savedRowCnt = userMapper.saveUserRole(userRole);
+
+        //then
+        Optional<UserRole> roleById = userMapper.findRoleById(user.getId());
+        assertThat(roleById).isPresent();
+        UserRole presentUserRole = roleById.get();
+
+        assertThat(Authority.valueOf(presentUserRole.getAuthority())).isEqualTo(Authority.BUYER);
+    }
+
+    @Test
+    @DisplayName("유저 권한 찾기")
+    void findRoleById() {
+        //given
+        User user = makeJoinedUserFixture(1);
+        UserRole userRole = new UserRole(user.getId(), Authority.BUYER.getAuthorityValue());
+        userMapper.saveUserRole(userRole);
+
+        //when
+        assertThat(userMapper.findRoleById(user.getId())).isPresent();
+        UserRole foundUserRole = userMapper.findRoleById(user.getId()).get();
+
+        //then
+        assertThat(foundUserRole.getAuthority()).isEqualTo(Authority.BUYER.getAuthorityValue());
     }
 
     @Test
@@ -92,6 +128,25 @@ class UserMapperTest {
 
         //then
         assertThat(updatedUser).isEqualTo(userForUpdate);
+    }
+
+    @Test
+    @DisplayName("유저 권한 업데이트")
+    void updateUserRole() {
+        //given
+        User user = makeJoinedUserFixture(1);
+        UserRole userRole = new UserRole(user.getId(), Authority.BUYER.getAuthorityValue());
+        userMapper.saveUserRole(userRole);
+
+        //when
+        userMapper.updateUserRole(user.getId(), Authority.SELLER.getAuthorityValue());
+
+        //then
+        Optional<UserRole> roleById = userMapper.findRoleById(user.getId());
+        assertThat(roleById).isPresent();
+        UserRole foundUserRole = roleById.get();
+
+        assertThat(foundUserRole.getAuthority()).isEqualTo(Authority.SELLER.getAuthorityValue());
     }
 
     @Test
@@ -156,5 +211,13 @@ class UserMapperTest {
                 .phoneNumber("phone" + param)
                 .address("address" + param)
                 .build();
+    }
+
+    User makeJoinedUserFixture(int param) {
+        User user1 = makeUserFixture(param);
+        userMapper.save(user1);
+
+        Optional<User> foundUser = userMapper.findByNameAndUsername(user1.getName(), user1.getUsername());
+        return foundUser.orElseThrow(() -> new DataNotFoundException("테스트 유저가 생성되지 않아 조회에 실패"));
     }
 }

@@ -5,6 +5,7 @@ import flab.commercemarket.controller.user.UserController;
 import flab.commercemarket.controller.user.dto.UserDto;
 import flab.commercemarket.controller.user.dto.UserResponseDto;
 import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.vo.Authority;
 import flab.commercemarket.domain.user.vo.User;
 import net.minidev.json.JSONArray;
 import net.minidev.json.parser.JSONParser;
@@ -20,9 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.filter.CharacterEncodingFilter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,13 +34,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private UserService userService;
@@ -48,7 +52,9 @@ class UserControllerTest {
 
     @BeforeEach
     public void init() {
-        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .addFilters(new CharacterEncodingFilter("UTF-8", true))
+                .build();
     }
 
     @Test
@@ -90,7 +96,8 @@ class UserControllerTest {
 
         //when
         ResultActions perform = mockMvc.perform(
-                get("/users/find/{name}/{username}", user.getName(), user.getUsername()));
+                get("/users/find/{name}/{username}",
+                        user.getName(), user.getUsername()));
 
         //then
         perform.andExpect(status().isOk())
@@ -101,6 +108,26 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.address").value(userResponseDto.getAddress()))
                 .andExpect(jsonPath("$.phoneNumber").value(userResponseDto.getPhoneNumber()))
                 .andExpect(jsonPath("$.email").value(userResponseDto.getEmail()));
+    }
+
+    @Test
+    @DisplayName("유저 권한 찾기 API 테스트")
+    void getUserRole() throws Exception {
+        //로그인 구현 이후 변경
+
+        //given
+        User user = makeUserFixture(1);
+        doReturn(Authority.BUYER).when(userService)
+                .getUserRoleById(eq(user.getId()));
+
+        //when
+        ResultActions perform = mockMvc.perform(
+                get("/users/role")
+        );
+
+        //then
+        perform.andExpect(status().isOk())
+                .andExpect(content().string("BUYER"));
     }
 
     @Test
@@ -153,6 +180,30 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.address").value(userResponseDto.getAddress()))
                 .andExpect(jsonPath("$.phoneNumber").value(userResponseDto.getPhoneNumber()))
                 .andExpect(jsonPath("$.email").value(userResponseDto.getEmail()));
+    }
+
+    @Test
+    @DisplayName("유저 권한 업데이트 API 테스트")
+    void updateUserRole() throws Exception {
+        //given
+        User user = makeUserFixture(1);
+        Authority authorityForChange = Authority.SELLER;
+
+        //when
+        Map<String, String> input = new HashMap<>();
+        input.put("authority", authorityForChange.name());
+        String jsonDto = objectMapper.writeValueAsString(input);
+
+        ResultActions perform = mockMvc.perform(
+                patch("/users/role/{userId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonDto)
+        );
+
+        //then
+        perform.andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("ok"));
     }
 
     @Test
