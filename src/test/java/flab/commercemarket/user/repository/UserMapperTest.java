@@ -131,6 +131,22 @@ class UserMapperTest {
         assertThat(deletedUser).isEqualTo(Optional.empty());
     }
 
+    @Test
+    @DisplayName("유저 권한 삭제")
+    void deleteUserRole() {
+        //given
+        User user = makeJoinedUserFixture(1);
+        UserRole userRole = new UserRole(user.getId(), Authority.BUYER.getAuthorityValue());
+        userMapper.saveUserRole(userRole);
+
+        //when
+        int deletedRowCnt = userMapper.deleteUserRole(user.getId());
+
+        //then
+        Optional<UserRole> deletedRole = userMapper.findRoleById(user.getId());
+        assertThat(deletedRole).isEqualTo(Optional.empty());
+    }
+
     User makeUserFixture(int param) {
         return User.builder()
                 .username("user" + param)

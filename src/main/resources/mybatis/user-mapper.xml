@@ -6,9 +6,19 @@
         <result property="phoneNumber" column="phone_number"/>
     </resultMap>
 
+    <resultMap id="userRoleResultMap" type="flab.commercemarket.domain.user.vo.UserRole">
+        <result property="userId" column="user_id"/>
+    </resultMap>
+
     <insert id="save" parameterType="flab.commercemarket.domain.user.vo.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO market_user (username, password, name, address, phone_number, email)
         VALUES (#{username}, #{password}, #{name}, #{address}, #{phoneNumber}, #{email})
+    </insert>
+
+    <insert id="saveUserRole" parameterType="flab.commercemarket.domain.user.vo.UserRole" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_role (user_id, authority)
+        VALUES (#{userId}, #{authority})
     </insert>
 
     <select id="findById" parameterType="long" resultMap="userResultMap">
@@ -27,6 +37,10 @@
         SELECT * FROM market_user
     </select>
 
+    <select id="findRoleById" parameterType="long" resultMap="userRoleResultMap">
+        SELECT * FROM user_role WHERE user_id = #{id}
+    </select>
+
     <update id="update">
         UPDATE market_user
         SET
@@ -40,7 +54,16 @@
         id = #{id}
     </update>
 
+    <update id="updateUserRole">
+        UPDATE user_role SET authority = #{authority}
+        WHERE user_id = #{userId}
+    </update>
+
     <delete id="delete" parameterType="long">
         DELETE FROM market_user WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteUserRole" parameterType="long">
+        DELETE FROM user_role WHERE user_id = #{userId}
     </delete>
 </mapper>

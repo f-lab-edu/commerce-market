@@ -1,6 +1,9 @@
 package flab.commercemarket.domain.user.mapper;
 
+import flab.commercemarket.common.helper.Enum;
+import flab.commercemarket.domain.user.vo.Authority;
 import flab.commercemarket.domain.user.vo.User;
+import flab.commercemarket.domain.user.vo.UserRole;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,6 +14,10 @@ import java.util.Optional;
 public interface UserMapper {
 
     int save(User user);
+
+    int saveUserRole(UserRole userRole);
+
+    int updateUserRole(@Param("userId") Long userId, @Param("authority") @Enum(enumClass = Authority.class, ignoreCase = true) int authority);
 
     // 내부 로직용
     Optional<User> findById(Long id);
@@ -23,7 +30,11 @@ public interface UserMapper {
 
     List<User> findAll();
 
+    Optional<UserRole> findRoleById(Long id);
+
     int update(@Param("id") Long id, @Param("user") User user);
 
     int delete(Long id);
+
+    int deleteUserRole(Long userId);
 }
