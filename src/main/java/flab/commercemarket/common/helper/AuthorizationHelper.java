@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthorizationHelper {
 
-    public void checkUserAuthorization(long cartUserId, long loginUserId) {
-        if (cartUserId != loginUserId) {
-            log.info("cartUserId = {}, loginUserId = {}", cartUserId, loginUserId);
+    public void checkUserAuthorization(long ownerUserId, long loginUserId) {
+        if (ownerUserId != loginUserId) {
+            log.info("dataUserId = {}, loginUserId = {}", ownerUserId, loginUserId);
             throw new ForbiddenException("유저 권한정보가 일치하지 않음");
         }
     }
