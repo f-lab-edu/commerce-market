@@ -13,6 +13,10 @@ public interface WishListMapper {
 
     List<WishList> getWishListItemByUserId(long userId);
 
+    List<WishList> getWishListItemByUserIdWithPagination(long userId, int limit, int offset);
+
+    int getWishListCountByUserId(long userId);
+
     Optional<WishList> findById(long id);
 
     void deleteWishList(long wishListId);

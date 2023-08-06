@@ -19,12 +19,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -81,31 +79,6 @@ class WishListServiceTest {
     }
 
     @Test
-    @DisplayName("위시리스트 가져오기")
-    public void getWishListsTest() {
-        // given
-        long userId = 1L;
-
-        List<WishList> wishLists = Arrays.asList(
-                new WishList(1L, 1L, userId),
-                new WishList(2L, 2L, userId),
-                new WishList(3L, 3L, userId)
-        );
-
-        // when
-        when(userService.getUserById(userId)).thenReturn(any());
-        when(wishListMapper.getWishListItemByUserId(userId)).thenReturn(wishLists);
-
-        List<WishList> result = wishListService.getWishLists(userId);
-
-        // then
-        verify(userService, times(1)).getUserById(userId);
-        verify(wishListMapper, times(1)).getWishListItemByUserId(userId);
-
-        assertThat(wishLists).isEqualTo(result);
-    }
-
-    @Test
     @DisplayName("현재 등록하는 상품이 해당 유저의 위시리스트에 이미 존재하는 상품이라면 예외를 발생시킨다.")
     public void registerWishListTest_DuplicateWishList() throws Exception {
         // given
@@ -122,6 +95,61 @@ class WishListServiceTest {
         doThrow(DuplicateDataException.class).when(wishlistHelper).verifyDuplicatedWishList(userId, productId);
 
         assertThrows(DuplicateDataException.class, () -> wishListService.registerWishList(userId, productId));
+    }
+
+    @Test
+    public void getWishListTest() throws Exception {
+        // given
+        long userId = 1L;
+        int page = 2;
+        int size = 10;
+
+        // when
+        List<WishList> wishLists = new ArrayList<>();
+        when(userService.getUserById(userId)).thenReturn(new User());
+        when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists);
+
+        // then
+        List<WishList> result = wishListService.getWishLists(userId, page, size);
+        assertThat(wishLists).isEqualTo(result);
+    }
+
+    @Test
+    @DisplayName("WishList 조회 페이지네이션 적용")
+    public void getWishListTest_pagination() throws Exception {
+        // given
+        long userId = 1L;
+        int page = 1;
+        int size = 10;
+
+        List<WishList> wishLists = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            WishList wishList = new WishList((long) i, i, userId);
+            wishLists.add(wishList);
+        }
+
+        // when
+        when(userService.getUserById(userId)).thenReturn(new User());
+        when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists.subList(0, size));
+
+        List<WishList> result = wishListService.getWishLists(userId, page, size);
+
+        // then
+        assertThat(result).isEqualTo(wishLists.subList(0, size));
+    }
+
+    @Test
+    public void getWishListCountByUserIdTest() throws Exception {
+        // given
+        long userId = 1L;
+        int count = 5;
+
+        // when
+        when(wishListMapper.getWishListCountByUserId(userId)).thenReturn(count);
+        int result = wishListService.getWishListCountByUserId(userId);
+
+        // then
+        assertThat(count).isEqualTo(result);
     }
 
     @Test

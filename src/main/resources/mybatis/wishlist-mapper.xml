@@ -17,6 +17,17 @@
         SELECT * FROM wish_list WHERE user_id = #{userId}
     </select>
 
+    <select id="getWishListItemByUserIdWithPagination" resultMap="wishListResultMap">
+        SELECT * FROM wish_list
+        WHERE user_id = #{userId}
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="getWishListCountByUserId" resultType="int">
+        SELECT COUNT(*) FROM wish_list WHERE user_id = #{userId}
+    </select>
+
     <select id="findById" parameterType="long" resultMap="wishListResultMap">
         SELECT * FROM wish_list WHERE id = #{id}
     </select>

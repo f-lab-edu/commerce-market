@@ -29,7 +29,7 @@ public class WishListController {
                                         @RequestParam int size) {
         // TODO @RequestParam long userId 제거 -> 로그인 정보에서 userId 가져오도록 refactoring
         List<WishList> wishLists = wishListService.getWishLists(userId, page, size);
-        int totalElements = wishListService.countWishListByUserId(userId);
+        int totalElements = wishListService.getWishListCountByUserId(userId);
 
         List<WishListResponseDto> wishListResponseList = wishLists.stream()
                 .map(WishList::toWishlistResponseDto)

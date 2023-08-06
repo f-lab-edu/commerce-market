@@ -38,7 +38,7 @@ public class WishListService {
 
     @Transactional(readOnly = true)
     public List<WishList> getWishLists(long userId, int page, int size) {
-        log.info("Start getWishLists");
+        log.info("Start registerWishList");
 
         int limit = size;
         int offset = (page - 1) * size;
@@ -49,7 +49,7 @@ public class WishListService {
     }
 
     @Transactional(readOnly = true)
-    public int countWishListByUserId(long userId) {
+    public int getWishListCountByUserId(long userId) {
         log.info("Start getWishListCountByUserId = {}", userId);
 
         return wishListMapper.getWishListCountByUserId(userId);
