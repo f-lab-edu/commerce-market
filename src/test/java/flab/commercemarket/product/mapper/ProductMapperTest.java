@@ -37,7 +37,6 @@ class ProductMapperTest {
         product.setStockAmount(1);
         product.setSalesAmount(1);
         product.setLikeCount(1);
-        product.setDislikeCount(1);
         product.setSellerId(2);
 
         // when
@@ -126,6 +125,8 @@ class ProductMapperTest {
     @Test
     @DisplayName("키워드에 해당하는 상품을 검색하여 반환합니다")
     void searchProduct() {
+        int offset = 1;
+        int size = 10;
         Product product1 = new Product();
         product1.setName("Apple");
         product1.setPrice(1000);
@@ -144,7 +145,7 @@ class ProductMapperTest {
 
         String keyword = "Apple";
 
-        List<Product> searchResults = productMapper.searchProduct(keyword);
+        List<Product> searchResults = productMapper.searchProduct(keyword, offset, size);
 
         assertNotNull(searchResults);
 
@@ -169,7 +170,6 @@ class ProductMapperTest {
         product.setStockAmount(1);
         product.setSalesAmount(1);
         product.setLikeCount(1);
-        product.setDislikeCount(1);
         product.setSellerId(2);
 
         // 상품을 데이터베이스에 삽입

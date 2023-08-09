@@ -36,11 +36,16 @@
         DELETE FROM cart WHERE id = #{id}
     </delete>
 
-
-    <select id="checkCartExistence" resultType="boolean">
+    <select id="isAlreadyExistentProductInUserCart" resultType="boolean">
         SELECT EXISTS(
-                       SELECT 1 FROM cart
-                       WHERE user_id = #{userId} AND product_id = #{productId}
-                   ) AS exist
+            SELECT 1 FROM cart
+            WHERE user_id = #{userId} AND product_id = #{productId}
+        ) AS exist
+    </select>
+
+    <select id="isExistentProduct" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM product WHERE id = #{productId}
+        ) AS exist
     </select>
 </mapper>

@@ -17,7 +17,6 @@ public class Product {
     private int stockAmount;
     private int salesAmount;
     private int likeCount;
-    private int dislikeCount;
     private long sellerId;
 
     public ProductResponseDto toProductResponseDto() {
@@ -30,7 +29,6 @@ public class Product {
                 .stockAmount(stockAmount)
                 .salesAmount(salesAmount)
                 .likeCount(likeCount)
-                .dislikeCount(dislikeCount)
                 .build();
     }
 }

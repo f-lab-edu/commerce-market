@@ -51,6 +51,7 @@ class CartServiceTest {
     }
 
     @Test
+    @DisplayName("장바구니 등록 성공")
     public void registerCartTest_successfulRegister() throws Exception {
         // given
         long productId = 1L;
@@ -58,7 +59,10 @@ class CartServiceTest {
         Cart data = makeCartFixture();
 
         // when
-        when(productService.getVerifiedProduct(productId)).thenReturn(new Product());
+        doNothing().when(authorizationHelper).checkUserAuthorization(userId, userId);
+        when(cartMapper.isExistentProduct(productId)).thenReturn(true);
+        when(cartMapper.isAlreadyExistentProductInUserCart(userId, productId)).thenReturn(false);
+
         Cart registerCart = cartService.registerCart(data, userId);
 
         // then
@@ -68,12 +72,7 @@ class CartServiceTest {
     }
 
     @Test
-    @DisplayName("testUpdateCart_unauthorizedUser 테스트에서 커버")
-    public void 유저_권한_검증() throws Exception {
-    }
-
-    @Test
-    @DisplayName("장바구니에 등록할 상품정보가 존재하지 않을때 예외를 발생시킨다.")
+    @DisplayName("상품정보가 존재하지 않을때 예외를 발생시킨다.")
     public void registerCartTest_not_found_product() throws Exception {
         // given
         long userId = 1L;
@@ -81,7 +80,8 @@ class CartServiceTest {
         Cart data = makeCartFixture();
 
         // when
-        when(productService.getVerifiedProduct(productId)).thenThrow(new DataNotFoundException("조회한 상품 정보가 없음"));
+        doNothing().when(authorizationHelper).checkUserAuthorization(userId, userId);
+        when(cartMapper.isExistentProduct(productId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
@@ -98,8 +98,9 @@ class CartServiceTest {
         Cart data = makeCartFixture();
 
         // when
-        when(productService.getVerifiedProduct(productId)).thenReturn(new Product());
-        when(cartMapper.checkCartExistence(userId, productId)).thenReturn(true);
+        doNothing().when(authorizationHelper).checkUserAuthorization(userId, userId);
+        when(cartMapper.isExistentProduct(productId)).thenReturn(true);
+        when(cartMapper.isAlreadyExistentProductInUserCart(userId, productId)).thenThrow(DuplicateDataException.class);
 
         // then
         assertThrows(DuplicateDataException.class, () -> {
@@ -237,6 +238,9 @@ class CartServiceTest {
         when(cartMapper.findById(cartId)).thenReturn(Optional.of(existCart));
 
         long deniedUserId = 2L; // 유저 권한 정보가 다름
+        doThrow(ForbiddenException.class)
+                .when(authorizationHelper).checkUserAuthorization(userId, deniedUserId);
+
         assertThrows(ForbiddenException.class, () -> {
             cartService.deleteCart(cartId, deniedUserId);
         });
