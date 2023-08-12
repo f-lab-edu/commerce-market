@@ -47,38 +47,45 @@ public class ProductService {
         return foundProduct;
     }
 
-
     public Product findProduct(long id) {
         log.info("Find ProductId. {}", id);
 
         return getVerifiedProduct(id);
     }
 
-    public List<Product> findProducts(int page) {
-        int size = 10;
+    public List<Product> findProducts(int page, int size) {
+        log.info("Find All Product. page = {}, size = {}", page, size);
+        int limit = size;
         int offset = (page - 1) * size;
 
-        log.info("Find All Product. page = {}", page);
-        return productMapper.findAll(offset, size);
+        return productMapper.findAll(offset, limit);
     }
 
-    public List<Product> searchProduct(String keyword) {
-        log.info("Search Product with keyword. keyword = {}", keyword);
-        return productMapper.searchProduct(keyword);
+    public int countGetProduct() {
+        log.info("Start getProductCount");
+
+        return productMapper.countProduct();
+    }
+
+    public List<Product> searchProduct(String keyword, int page, int size) {
+        log.info("Start searchProduct with keyword. keyword = {}", keyword);
+
+        int limit = size;
+        int offset = (page -1) * size;
+
+        return productMapper.searchProduct(keyword, offset, limit);
+    }
+
+    public int countSearchProductByKeyword(String keyword) {
+        log.info("Start countSearchProductByKeyword. keyword = {}", keyword);
+
+        return productMapper.searchProductCountByKeyword(keyword);
     }
 
     public void deleteProduct(long id) {
-        getVerifiedProduct(id);
-        productMapper.deleteProduct(id);
+        Product foundProduct = getVerifiedProduct(id);
+        productMapper.deleteProduct(foundProduct.getId());
         log.info("Delete Product. ProductId = {}", id);
-    }
-
-    public Product getVerifiedProduct(long id) {
-        Optional<Product> optionalProduct = productMapper.findById(id);
-        return optionalProduct.orElseThrow(() -> {
-            log.info("productId = {}", id);
-            return new DataNotFoundException("조회한 상품 정보가 없음");
-        });
     }
 
     public void updateLikeCount(long productId) {
@@ -93,5 +100,13 @@ public class ProductService {
         productMapper.updateLikeCount(product);
 
         log.info("New LikeCount = {}", newLikeCount);
+    }
+
+    private Product getVerifiedProduct(long id) {
+        Optional<Product> optionalProduct = productMapper.findById(id);
+        return optionalProduct.orElseThrow(() -> {
+            log.info("productId = {}", id);
+            return new DataNotFoundException("조회한 상품 정보가 없음");
+        });
     }
 }

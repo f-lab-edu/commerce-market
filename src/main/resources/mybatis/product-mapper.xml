@@ -3,7 +3,15 @@
 <mapper namespace="flab.commercemarket.domain.product.mapper.ProductMapper">
 
     <resultMap id="productResultMap" type="flab.commercemarket.domain.product.vo.Product">
-        <result column="product_name" property="name"/>
+        <id property="id" column="id"/>
+        <result property="name" column="product_name"/>
+        <result property="price" column="price"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="description" column="description"/>
+        <result property="stockAmount" column="stock_amount"/>
+        <result property="salesAmount" column="sales_amount"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="sellerId" column="seller_id"/>
     </resultMap>
 
     <insert id="insertProduct" parameterType="flab.commercemarket.domain.product.vo.Product" useGeneratedKeys="true"
@@ -29,11 +37,21 @@
     </select>
 
     <select id="findAll" parameterType="map" resultMap="productResultMap">
-        SELECT * FROM product LIMIT #{offset, jdbcType=INTEGER}, #{size, jdbcType=INTEGER}
+        SELECT * FROM product LIMIT #{offset}, #{size}
     </select>
 
-    <select id="searchProduct" parameterType="String" resultMap="productResultMap">
-        SELECT * FROM product WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
+    <select id="countProduct" resultType="int">
+        SELECT COUNT(*) FROM product
+    </select>
+
+    <select id="searchProduct" resultMap="productResultMap">
+        SELECT * FROM product
+        WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="searchProductCountByKeyword" resultType="int">
+        SELECT COUNT(*) FROM product WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
     </select>
 
     <delete id="deleteProduct" parameterType="long">

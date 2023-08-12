@@ -1,5 +1,6 @@
 package flab.commercemarket.controller.product;
 
+import flab.commercemarket.common.responsedto.PageResponseDto;
 import flab.commercemarket.controller.product.dto.ProductDto;
 import flab.commercemarket.controller.product.dto.ProductResponseDto;
 import flab.commercemarket.domain.product.ProductService;
@@ -40,20 +41,38 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponseDto> getProducts(@RequestParam int page) {
-        List<Product> products = productService.findProducts(page);
+    public PageResponseDto<ProductResponseDto> getProducts(@RequestParam int page, @RequestParam int size) {
+        List<Product> products = productService.findProducts(page, size);
 
-        return products.stream()
+        int totalElements = productService.countGetProduct();
+        List<ProductResponseDto> productResponseDto = products.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
+
+        return PageResponseDto.<ProductResponseDto>builder()
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .content(productResponseDto)
+                .build();
     }
 
     @GetMapping("/search")
-    public List<ProductResponseDto> searchProduct(@RequestParam String keyword) {
-        List<Product> products = productService.searchProduct(keyword);
-        return products.stream()
+    public PageResponseDto<ProductResponseDto> searchProduct(@RequestParam String keyword, @RequestParam int page, @RequestParam int size) {
+        // todo pagination 기능 추가
+        List<Product> products = productService.searchProduct(keyword, page, size);
+
+        int totalElements = productService.countSearchProductByKeyword(keyword);
+        List<ProductResponseDto> productResponseDto = products.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
+
+        return PageResponseDto.<ProductResponseDto>builder()
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .content(productResponseDto)
+                .build();
     }
 
     @DeleteMapping("/{productId}")

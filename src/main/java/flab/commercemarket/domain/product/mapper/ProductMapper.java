@@ -17,9 +17,13 @@ public interface ProductMapper {
 
     Optional<Product> findById(long id);
 
-    List<Product> findAll(int offset, int size);
+    List<Product> findAll(int offset, int limit);
 
-    List<Product> searchProduct(String keyword);
+    int countProduct();
+
+    List<Product> searchProduct(String keyword, int offset, int limit);
+
+    int searchProductCountByKeyword(String keyword);
 
     void deleteProduct(long id);
 

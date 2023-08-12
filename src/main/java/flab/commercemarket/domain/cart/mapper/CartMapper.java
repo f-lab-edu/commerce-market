@@ -15,10 +15,11 @@ public interface CartMapper {
 
     Optional<Cart> findById(long cartId);
 
-    boolean checkCartExistence(long userId, long productId);
-
     List<Cart> findAll(long userId);
 
     void deleteCart(long cartId);
 
+    boolean isAlreadyExistentProductInUserCart(long userId, long productId);
+
+    boolean isExistentProduct(long productId);
 }

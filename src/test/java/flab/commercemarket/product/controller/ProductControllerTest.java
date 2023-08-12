@@ -119,6 +119,7 @@ class ProductControllerTest {
     @Test
     void getProductsTest() throws Exception {
         int page = 1;
+        int size = 10;
         Product product1 = makeProductFixture(1);
         Product product2 = makeProductFixture(2);
 
@@ -126,53 +127,66 @@ class ProductControllerTest {
                 product1, product2
         );
 
-        when(productService.findProducts(page)).thenReturn(expectedProducts);
+        when(productService.findProducts(page, size)).thenReturn(expectedProducts);
+        when(productService.countGetProduct()).thenReturn(2);
 
         mockMvc.perform(get("/products")
-                        .param("page", String.valueOf(page))
+                        .param("page",  String.valueOf(page))
+                        .param("size", String.valueOf(size))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(expectedProducts.size()))
-                .andExpect(jsonPath("$[0].id").value(product1.getId()))
-                .andExpect(jsonPath("$[0].name").value(product1.getName()))
-                .andExpect(jsonPath("$[0].price").value(product1.getPrice()))
-                .andExpect(jsonPath("$[0].imageUrl").value(product1.getImageUrl()))
-                .andExpect(jsonPath("$[0].description").value(product1.getDescription()))
-                .andExpect(jsonPath("$[0].stockAmount").value(product1.getStockAmount()))
-                .andExpect(jsonPath("$[1].id").value(product2.getId()))
-                .andExpect(jsonPath("$[1].name").value(product2.getName()))
-                .andExpect(jsonPath("$[1].price").value(product2.getPrice()))
-                .andExpect(jsonPath("$[1].imageUrl").value(product2.getImageUrl()))
-                .andExpect(jsonPath("$[1].description").value(product2.getDescription()))
-                .andExpect(jsonPath("$[1].stockAmount").value(product2.getStockAmount()));
+                .andExpect(jsonPath("$.content.length()").value(expectedProducts.size()))
+                .andExpect(jsonPath("$.content[0].id").value(product1.getId()))
+                .andExpect(jsonPath("$.content[0].name").value(product1.getName()))
+                .andExpect(jsonPath("$.content[0].price").value(product1.getPrice()))
+                .andExpect(jsonPath("$.content[0].imageUrl").value(product1.getImageUrl()))
+                .andExpect(jsonPath("$.content[0].description").value(product1.getDescription()))
+                .andExpect(jsonPath("$.content[0].stockAmount").value(product1.getStockAmount()))
+                .andExpect(jsonPath("$.content[1].id").value(product2.getId()))
+                .andExpect(jsonPath("$.content[1].name").value(product2.getName()))
+                .andExpect(jsonPath("$.content[1].price").value(product2.getPrice()))
+                .andExpect(jsonPath("$.content[1].imageUrl").value(product2.getImageUrl()))
+                .andExpect(jsonPath("$.content[1].description").value(product2.getDescription()))
+                .andExpect(jsonPath("$.content[1].stockAmount").value(product2.getStockAmount()))
+                .andExpect(jsonPath("$.page").value(page))
+                .andExpect(jsonPath("$.size").value(size))
+                .andExpect(jsonPath("$.totalElements").value(expectedProducts.size()));
     }
 
     @Test
     void searchProductTest() throws Exception {
         String keyword = "product";
+        int size = 10;
+        int page = 1;
         Product product1 = makeProductFixture(1);
         Product product2 = makeProductFixture(2);
 
         List<Product> expectedProducts = Arrays.asList(product1, product2);
 
-        when(productService.searchProduct(keyword)).thenReturn(expectedProducts);
+        when(productService.searchProduct(keyword, page, size)).thenReturn(expectedProducts);
+        when(productService.countSearchProductByKeyword(keyword)).thenReturn(2);
 
         mockMvc.perform(get("/products/search")
-                        .param("keyword", keyword))
+                        .param("keyword", keyword)
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(expectedProducts.size()))
-                .andExpect(jsonPath("$[0].id").value(product1.getId()))
-                .andExpect(jsonPath("$[0].name").value(product1.getName()))
-                .andExpect(jsonPath("$[0].price").value(product1.getPrice()))
-                .andExpect(jsonPath("$[0].imageUrl").value(product1.getImageUrl()))
-                .andExpect(jsonPath("$[0].description").value(product1.getDescription()))
-                .andExpect(jsonPath("$[0].stockAmount").value(product1.getStockAmount()))
-                .andExpect(jsonPath("$[1].id").value(product2.getId()))
-                .andExpect(jsonPath("$[1].name").value(product2.getName()))
-                .andExpect(jsonPath("$[1].price").value(product2.getPrice()))
-                .andExpect(jsonPath("$[1].imageUrl").value(product2.getImageUrl()))
-                .andExpect(jsonPath("$[1].description").value(product2.getDescription()))
-                .andExpect(jsonPath("$[1].stockAmount").value(product2.getStockAmount()));
+                .andExpect(jsonPath("$.content.length()").value(expectedProducts.size()))
+                .andExpect(jsonPath("$.content[0].id").value(product1.getId()))
+                .andExpect(jsonPath("$.content[0].name").value(product1.getName()))
+                .andExpect(jsonPath("$.content[0].price").value(product1.getPrice()))
+                .andExpect(jsonPath("$.content[0].imageUrl").value(product1.getImageUrl()))
+                .andExpect(jsonPath("$.content[0].description").value(product1.getDescription()))
+                .andExpect(jsonPath("$.content[0].stockAmount").value(product1.getStockAmount()))
+                .andExpect(jsonPath("$.content[1].id").value(product2.getId()))
+                .andExpect(jsonPath("$.content[1].name").value(product2.getName()))
+                .andExpect(jsonPath("$.content[1].price").value(product2.getPrice()))
+                .andExpect(jsonPath("$.content[1].imageUrl").value(product2.getImageUrl()))
+                .andExpect(jsonPath("$.content[1].description").value(product2.getDescription()))
+                .andExpect(jsonPath("$.content[1].stockAmount").value(product2.getStockAmount()))
+                .andExpect(jsonPath("$.page").value(page))
+                .andExpect(jsonPath("$.size").value(size))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
@@ -186,13 +200,13 @@ class ProductControllerTest {
     }
 
     private ProductDto makeProductDtoFixture(int param) {
-        ProductDto productDto = new ProductDto();
-        productDto.setName("name " + param);
-        productDto.setPrice(param * 1000);
-        productDto.setImageUrl("url " + param);
-        productDto.setDescription("description " + param);
-        productDto.setStockAmount(param * 10);
-        return productDto;
+        String name = "name " + param;
+        int price = param * 1000;
+        String url = "url " + param;
+        String description = "description " + param;
+        int stockAmount = param * 10;
+
+        return new ProductDto(name, price, url, description, stockAmount);
     }
 
     private Product makeProductFixture(int param) {
