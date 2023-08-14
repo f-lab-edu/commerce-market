@@ -44,7 +44,7 @@ public class ProductController {
     public PageResponseDto<ProductResponseDto> getProducts(@RequestParam int page, @RequestParam int size) {
         List<Product> products = productService.findProducts(page, size);
 
-        int totalElements = productService.countGetProduct();
+        int totalElements = productService.countProducts();
         List<ProductResponseDto> productResponseDto = products.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
