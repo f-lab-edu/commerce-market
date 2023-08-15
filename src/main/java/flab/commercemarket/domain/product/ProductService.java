@@ -61,7 +61,7 @@ public class ProductService {
         return productMapper.findAll(offset, limit);
     }
 
-    public int countGetProduct() {
+    public int countProducts() {
         log.info("Start getProductCount");
 
         return productMapper.countProduct();

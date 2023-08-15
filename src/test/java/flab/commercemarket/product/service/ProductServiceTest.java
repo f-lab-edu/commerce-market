@@ -143,7 +143,7 @@ class ProductServiceTest {
 
         // when
         when(productMapper.countProduct()).thenReturn(expectedResults.size());
-        int result = productService.countGetProduct();
+        int result = productService.countProducts();
 
         // then
         assertThat(expectedResults.size()).isEqualTo(result);

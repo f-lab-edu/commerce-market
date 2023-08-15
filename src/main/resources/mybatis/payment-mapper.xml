@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="flab.commercemarket.domain.payment.mapper.PaymentMapper">
+
+    <resultMap id="paymentResultMap" type="flab.commercemarket.domain.payment.vo.Payment">
+        <id property="id" column="id"/>
+        <result property="applyNum" column="apply_num"/>
+        <result property="bankName" column="bank_name"/>
+        <result property="buyerAddr" column="buyer_addr"/>
+        <result property="buyerEmail" column="buyer_email"/>
+        <result property="buyerName" column="buyer_name"/>
+        <result property="buyerTel" column="buyer_tel"/>
+        <result property="cardName" column="card_name"/>
+        <result property="cardNumber" column="card_number"/>
+        <result property="cardQuota" column="card_quota"/>
+        <result property="customData" column="custom_data"/>
+        <result property="merchantUid" column="merchant_uid"/>
+        <result property="name" column="name"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="payMethod" column="pay_method"/>
+        <result property="pgProvider" column="pg_provider"/>
+        <result property="pgTid" column="pg_tid"/>
+        <result property="pgType" column="pg_type"/>
+        <result property="currency" column="currency"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="receiptUrl" column="receipt_url"/>
+        <result property="status" column="status"/>
+        <result property="impUid" column="imp_uid"/>
+        <result property="success" column="success"/>
+    </resultMap>
+
+    <insert id="insertPayment" parameterType="flab.commercemarket.domain.payment.vo.Payment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO payment_history
+            (pg_provider, merchant_uid, pay_method, paid_amount, buyer_email, buyer_name, buyer_tel, buyer_addr)
+        VALUES
+            (#{pgProvider}, #{merchantUid}, #{payMethod}, #{paidAmount}, #{buyerEmail}, #{buyerName}, #{buyerTel}, #{buyerAddr})
+    </insert>
+
+    <select id="findById" parameterType="long" resultMap="paymentResultMap">
+        SELECT * FROM payment_history WHERE id = #{id}
+    </select>
+
+    <select id="findByUsername" resultMap="paymentResultMap">
+        SELECT * FROM payment_history
+        WHERE buyer_name = #{username}
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByUsername" resultType="int">
+        SELECT COUNT(*) FROM payment_history where buyer_name = #{username}
+    </select>
+
+    <select id="isAlreadyExistentMerchantUid" resultType="boolean">
+        SELECT EXISTS(
+                       SELECT 1 FROM payment_history
+                       WHERE merchant_uid = #{merchantUid}
+                   ) AS exist
+    </select>
+</mapper>
