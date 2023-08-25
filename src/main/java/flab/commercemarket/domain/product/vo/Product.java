@@ -29,6 +29,7 @@ public class Product {
                 .stockAmount(stockAmount)
                 .salesAmount(salesAmount)
                 .likeCount(likeCount)
+                .sellerId(sellerId)
                 .build();
     }
 }

@@ -1,6 +1,7 @@
 package flab.commercemarket.domain.product;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.domain.product.mapper.ProductMapper;
 import flab.commercemarket.domain.product.vo.Product;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private final AuthorizationHelper authorizationHelper;
     private final ProductMapper productMapper;
 
     public Product registerProduct(Product product) {
@@ -32,9 +34,10 @@ public class ProductService {
     public Product updateProduct(long productId, Product data) {
         log.info("Start updateProduct");
 
-        // todo 요청으로 넘어오는 data에 null 값이 없는지 체크하는 로직이 필요합니다.
-
         Product foundProduct = getProduct(productId);
+
+        authorizationHelper.checkUserAuthorization(foundProduct.getSellerId(), data.getSellerId());
+
         foundProduct.setName(data.getName());
         foundProduct.setPrice(data.getPrice());
         foundProduct.setImageUrl(data.getImageUrl());
