@@ -19,16 +19,14 @@ import java.util.Optional;
 public class WishListService {
 
     private final WishListMapper wishListMapper;
-    private final UserService userService;
-    private final ProductService productService;
     private final AuthorizationHelper authorizationHelper;
 
     @Transactional
     public void registerWishList(long userId, long productId) {
         log.info("Start registerWishList");
 
-        userService.getUserById(userId);
-        productService.getProduct(productId);
+        checkUserExistence(userId);
+        checkValidProduct(productId);
         verifyDuplicatedWishList(userId, productId);
 
         wishListMapper.insertWishList(userId, productId);
@@ -42,7 +40,7 @@ public class WishListService {
         int limit = size;
         int offset = (page - 1) * size;
 
-        userService.getUserById(userId);
+        checkUserExistence(userId);
         log.info("Get WishList userId = {}", userId);
         return wishListMapper.getWishListItemByUserIdWithPagination(userId, limit, offset);
     }
@@ -83,5 +81,24 @@ public class WishListService {
             log.warn("wishListId = {}", wishListId);
             return new DataNotFoundException("조회한 위시리스트가 없음");
         });
+    }
+
+    private void checkUserExistence(long userId) {
+        log.info("Check Existent User. userId: {}", userId);
+
+        boolean result = wishListMapper.isExistentUser(userId);
+        if (!result) {
+            log.warn("userId: {}", userId);
+            throw new DataNotFoundException("해당 사용자가 존재하지 않음");
+        }
+    }
+
+    private void checkValidProduct(long productId) {
+        log.info("Check Existent Product. productId: {}", productId);
+
+        if (!wishListMapper.isExistentProduct(productId)) {
+            log.info("productId = {}", productId);
+            throw new DataNotFoundException("존재하지 않는 상품");
+        }
     }
 }

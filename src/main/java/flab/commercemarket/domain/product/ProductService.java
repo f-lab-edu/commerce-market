@@ -86,8 +86,11 @@ public class ProductService {
         return productMapper.searchProductCountByKeyword(keyword);
     }
 
-    public void deleteProduct(long productId) {
+    public void deleteProduct(long productId, long loginUserId) {
         Product foundProduct = getProduct(productId);
+
+        authorizationHelper.checkUserAuthorization(foundProduct.getSellerId(), loginUserId);
+
         productMapper.deleteProduct(foundProduct.getId());
         log.info("Delete Product. ProductId = {}", productId);
     }

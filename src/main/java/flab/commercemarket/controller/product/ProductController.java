@@ -76,8 +76,8 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
-    public void deleteProduct(@PathVariable("productId") long productId) {
-        productService.deleteProduct(productId);
+    public void deleteProduct(@PathVariable("productId") long productId, @RequestParam long loginUserId) {
+        productService.deleteProduct(productId, loginUserId);
     }
 
     @PostMapping("/{productId}/likes")

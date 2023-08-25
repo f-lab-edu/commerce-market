@@ -20,4 +20,8 @@ public interface WishListMapper {
     Optional<WishList> findById(long id);
 
     void deleteWishList(long wishListId);
+
+    boolean isExistentUser(long userId);
+
+    boolean isExistentProduct(long productId);
 }

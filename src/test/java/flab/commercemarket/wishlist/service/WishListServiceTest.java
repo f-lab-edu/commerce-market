@@ -145,7 +145,7 @@ class WishListServiceTest {
         when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists);
 
         // then
-        List<WishList> result = wishListService.findWishLists(userId, page, size);
+        List<WishList> result = wishListService.getWishLists(userId, page, size);
         assertThat(wishLists).isEqualTo(result);
     }
 
@@ -183,7 +183,7 @@ class WishListServiceTest {
         when(userService.getUserById(userId)).thenReturn(new User());
         when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists.subList(0, size));
 
-        List<WishList> result = wishListService.findWishLists(userId, page, size);
+        List<WishList> result = wishListService.getWishLists(userId, page, size);
 
         // then
         assertThat(result).isEqualTo(wishLists.subList(0, size));
@@ -200,7 +200,7 @@ class WishListServiceTest {
         when(wishListMapper.isExistentUser(userId)).thenReturn(false);
 
         // then
-        assertThrows(DataNotFoundException.class, () -> wishListService.findWishLists(userId, page, size));
+        assertThrows(DataNotFoundException.class, () -> wishListService.getWishLists(userId, page, size));
     }
 
     @Test
@@ -211,7 +211,7 @@ class WishListServiceTest {
 
         // when
         when(wishListMapper.getWishListCountByUserId(userId)).thenReturn(count);
-        int result = wishListService.findWishListCountByUserId(userId);
+        int result = wishListService.getWishListCountByUserId(userId);
 
         // then
         assertThat(count).isEqualTo(result);
