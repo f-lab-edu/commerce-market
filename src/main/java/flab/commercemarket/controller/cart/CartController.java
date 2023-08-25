@@ -45,7 +45,7 @@ public class CartController {
     @GetMapping
     public List<CartResponseDto> getCarts(@RequestParam long userId) {
         // todo 로그인 기능 추가 이후 userId를 조회하는 로직 변경 -> 토큰에서 조회 등
-        List<Cart> carts = cartService.getCarts(userId);
+        List<Cart> carts = cartService.findCarts(userId);
         return carts.stream()
                 .map(Cart::toCartResponseDto)
                 .collect(Collectors.toList());

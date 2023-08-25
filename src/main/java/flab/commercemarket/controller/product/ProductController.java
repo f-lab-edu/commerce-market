@@ -36,7 +36,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     public ProductResponseDto getProduct(@PathVariable("productId") long productId) {
-        Product product = productService.findProduct(productId);
+        Product product = productService.getProduct(productId);
         return product.toProductResponseDto();
     }
 

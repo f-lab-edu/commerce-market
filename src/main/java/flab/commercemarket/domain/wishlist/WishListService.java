@@ -3,8 +3,6 @@ package flab.commercemarket.domain.wishlist;
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
-import flab.commercemarket.domain.product.ProductService;
-import flab.commercemarket.domain.user.UserService;
 import flab.commercemarket.domain.wishlist.mapper.WishListMapper;
 import flab.commercemarket.domain.wishlist.vo.WishList;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +23,12 @@ public class WishListService {
     private final ProductService productService;
     private final AuthorizationHelper authorizationHelper;
 
-
     @Transactional
     public void registerWishList(long userId, long productId) {
         log.info("Start registerWishList");
 
         userService.getUserById(userId);
-        productService.findProduct(productId);
+        productService.getProduct(productId);
         verifyDuplicatedWishList(userId, productId);
 
         wishListMapper.insertWishList(userId, productId);
@@ -39,7 +36,7 @@ public class WishListService {
     }
 
     @Transactional(readOnly = true)
-    public List<WishList> getWishLists(long userId, int page, int size) {
+    public List<WishList> findWishLists(long userId, int page, int size) {
         log.info("Start registerWishList");
 
         int limit = size;
@@ -51,7 +48,7 @@ public class WishListService {
     }
 
     @Transactional(readOnly = true)
-    public int getWishListCountByUserId(long userId) {
+    public int findWishListCountByUserId(long userId) {
         log.info("Start getWishListCountByUserId = {}", userId);
 
         return wishListMapper.getWishListCountByUserId(userId);

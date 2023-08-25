@@ -101,7 +101,7 @@ class ProductServiceTest {
         // when
         when(productMapper.findById(productId)).thenReturn(Optional.of(product));
 
-        Product foundProduct = productService.findProduct(productId);
+        Product foundProduct = productService.getProduct(productId);
 
         // then
         assertThat(product).isEqualTo(foundProduct);

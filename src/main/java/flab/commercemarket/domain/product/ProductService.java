@@ -29,12 +29,12 @@ public class ProductService {
         return product;
     }
 
-    public Product updateProduct(long id, Product data) {
+    public Product updateProduct(long productId, Product data) {
         log.info("Start updateProduct");
 
         // todo 요청으로 넘어오는 data에 null 값이 없는지 체크하는 로직이 필요합니다.
 
-        Product foundProduct = getVerifiedProduct(id);
+        Product foundProduct = getProduct(productId);
         foundProduct.setName(data.getName());
         foundProduct.setPrice(data.getPrice());
         foundProduct.setImageUrl(data.getImageUrl());
@@ -43,14 +43,18 @@ public class ProductService {
 
         productMapper.updateProduct(foundProduct);
 
-        log.info("Update Product. productId = {}", id);
+        log.info("Update Product. productId = {}", productId);
         return foundProduct;
     }
 
-    public Product findProduct(long id) {
-        log.info("Find ProductId. {}", id);
+    public Product getProduct(long productId) {
+        log.info("Start get ProductId: {}", productId);
 
-        return getVerifiedProduct(id);
+        Optional<Product> optionalProduct = productMapper.findById(productId);
+        return optionalProduct.orElseThrow(() -> {
+            log.info("productId = {}", productId);
+            return new DataNotFoundException("조회한 상품 정보가 없음");
+        });
     }
 
     public List<Product> findProducts(int page, int size) {
@@ -82,15 +86,15 @@ public class ProductService {
         return productMapper.searchProductCountByKeyword(keyword);
     }
 
-    public void deleteProduct(long id) {
-        Product foundProduct = getVerifiedProduct(id);
+    public void deleteProduct(long productId) {
+        Product foundProduct = getProduct(productId);
         productMapper.deleteProduct(foundProduct.getId());
-        log.info("Delete Product. ProductId = {}", id);
+        log.info("Delete Product. ProductId = {}", productId);
     }
 
     public void updateLikeCount(long productId) {
         log.info("Start increaseLikeCount");
-        Product product = findProduct(productId);
+        Product product = getProduct(productId);
         // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
 
         int likeCount = product.getLikeCount();
@@ -100,13 +104,5 @@ public class ProductService {
         productMapper.updateLikeCount(product);
 
         log.info("New LikeCount = {}", newLikeCount);
-    }
-
-    private Product getVerifiedProduct(long id) {
-        Optional<Product> optionalProduct = productMapper.findById(id);
-        return optionalProduct.orElseThrow(() -> {
-            log.info("productId = {}", id);
-            return new DataNotFoundException("조회한 상품 정보가 없음");
-        });
     }
 }

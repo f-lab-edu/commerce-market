@@ -204,8 +204,8 @@ class CartServiceTest {
                 new Cart(1L, 3L, 30)
         );
 
-        when(cartService.getCarts(userId)).thenReturn(expectedCartList);
-        List<Cart> result = cartService.getCarts(userId);
+        when(cartService.findCarts(userId)).thenReturn(expectedCartList);
+        List<Cart> result = cartService.findCarts(userId);
 
         assertThat(result.size()).isEqualTo(3);
         for (Cart cart : result) {
@@ -260,10 +260,10 @@ class CartServiceTest {
 
         List<Product> productList = makeProductListFixture();
 
-        when(cartService.getCarts(userId)).thenReturn(cartList);
-        when(productService.findProduct(1L)).thenReturn(productList.get(0));
-        when(productService.findProduct(2L)).thenReturn(productList.get(1));
-        when(productService.findProduct(3L)).thenReturn(productList.get(2));
+        when(cartService.findCarts(userId)).thenReturn(cartList);
+        when(productService.getProduct(1L)).thenReturn(productList.get(0));
+        when(productService.getProduct(2L)).thenReturn(productList.get(1));
+        when(productService.getProduct(3L)).thenReturn(productList.get(2));
 
         int expectedSum = calculateExpectedSum(cartList, productList);
         int actualSum = cartService.calculateTotalPrice(userId);
