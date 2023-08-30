@@ -36,7 +36,7 @@ public class CartService {
     public Cart updateCart(Cart data, long cartId, long userId) {
         log.info("Start updateCart");
 
-        Cart foundCart = getVerifiedCart(cartId);
+        Cart foundCart = getCart(cartId);
         authorizationHelper.checkUserAuthorization(foundCart.getUserId(), userId);
 
         // userID와 productId는 수정되면 안된다.
@@ -49,7 +49,7 @@ public class CartService {
         return foundCart;
     }
 
-    public List<Cart> getCarts(long userId) {
+    public List<Cart> findCarts(long userId) {
         log.info("Start getCarts");
 
         // todo 페이지네이션 적용해야 합니다.
@@ -60,7 +60,7 @@ public class CartService {
     public void deleteCart(long cartId, long userId) {
         log.info("Start deleteCart");
 
-        Cart cart = getVerifiedCart(cartId);
+        Cart cart = getCart(cartId);
         authorizationHelper.checkUserAuthorization(cart.getUserId(), userId);
 
         cartMapper.deleteCart(cartId);
@@ -70,7 +70,7 @@ public class CartService {
     public int calculateTotalPrice(long userId) {
         log.info("Start calculateTotalPrice");
 
-        List<Cart> carts = getCarts(userId);
+        List<Cart> carts = findCarts(userId);
 
         int sum = 0;
         // 성능이슈 예상지점
@@ -79,7 +79,7 @@ public class CartService {
         for (Cart cart : carts) {
             int quantity = cart.getQuantity();
             long productId = cart.getProductId();
-            int price = productService.findProduct(productId).getPrice();
+            int price = productService.getProduct(productId).getPrice();
             sum += quantity * price;
         }
 
@@ -87,7 +87,7 @@ public class CartService {
         return sum;
     }
 
-    private Cart getVerifiedCart(long cartId) {
+    private Cart getCart(long cartId) {
         Optional<Cart> optionalCart = cartMapper.findById(cartId);
         return optionalCart.orElseThrow(() -> {
             log.info("cartId = {}", cartId);

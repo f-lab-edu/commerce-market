@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,13 +67,43 @@ class WishListServiceTest {
         Product product = productFixture(productId);
 
         // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
+        when(wishListMapper.isExistentProduct(productId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(productService.findProduct(productId)).thenReturn(product);
-        wishListService.registerWishList(userId, productId);
+        when(productService.getProduct(productId)).thenReturn(product);
 
         // then
-        verify(userService, times(1)).getUserById(userId);
-        verify(productService, times(1)).findProduct(productId);
+        wishListService.registerWishList(userId, productId);
+
+        verify(wishListMapper, Mockito.times(1)).insertWishList(userId, productId);
+    }
+
+    @Test
+    @DisplayName("찜목록 등록시 사용자가 없으면 DataNotFoundException 예외 발생")
+    public void registerWishListTest_not_found_user() throws Exception {
+        // given
+        long productId = 1L;
+        long userId = 1L;
+
+        // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
+
+        // then
+        assertThrows(DataNotFoundException.class, () -> wishListService.registerWishList(userId, productId));
+    }
+
+    @Test
+    @DisplayName("찜목록 등록시 등록하는 상품이 없으면 DataNotFoundException 예외 발생")
+    public void registerWishListTest_not_found_product() throws Exception {
+        // given
+        long productId = 1L;
+        long userId = 1L;
+
+        // when
+        when(wishListMapper.isExistentProduct(productId)).thenReturn(false);
+
+        // then
+        assertThrows(DataNotFoundException.class, () -> wishListService.registerWishList(userId, productId));
     }
 
     @Test
@@ -86,8 +117,10 @@ class WishListServiceTest {
         List<WishList> userWishLists = wishListsFixture();
 
         // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
+        when(wishListMapper.isExistentProduct(userId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(productService.findProduct(productId)).thenReturn(product);
+        when(productService.getProduct(productId)).thenReturn(product);
         when(wishListMapper.getWishListItemByUserId(userId)).thenReturn(userWishLists);
         when(wishListMapper.findById(userId)).thenReturn(Optional.of(new WishList())); // Mocking an existing duplicate item
 
@@ -98,7 +131,8 @@ class WishListServiceTest {
     }
 
     @Test
-    public void getWishListTest() throws Exception {
+    @DisplayName("찜목록을 정상적으로 조회하는 경우")
+    public void findWishListsTest() throws Exception {
         // given
         long userId = 1L;
         int page = 2;
@@ -106,6 +140,7 @@ class WishListServiceTest {
 
         // when
         List<WishList> wishLists = new ArrayList<>();
+        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(new User());
         when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists);
 
@@ -115,8 +150,23 @@ class WishListServiceTest {
     }
 
     @Test
+    @DisplayName("사용자의 찜목록 조회시, userId가 존재하지 않으면 예외가 발생한다.")
+    public void findWishListsTest_not_found_user() throws Exception {
+        // given
+        long userId = 1L;
+        int page = 2;
+        int size = 10;
+
+        // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
+
+        // then
+        assertThrows(DataNotFoundException.class, () -> wishListService.findWishLists(userId, page, size));
+    }
+
+    @Test
     @DisplayName("WishList 조회 페이지네이션 적용")
-    public void getWishListTest_pagination() throws Exception {
+    public void findWishListsTest_pagination() throws Exception {
         // given
         long userId = 1L;
         int page = 1;
@@ -129,6 +179,7 @@ class WishListServiceTest {
         }
 
         // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(new User());
         when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists.subList(0, size));
 
@@ -136,6 +187,20 @@ class WishListServiceTest {
 
         // then
         assertThat(result).isEqualTo(wishLists.subList(0, size));
+    }
+
+    @Test
+    public void findWishLists_not_found_user() throws Exception {
+        // given
+        long userId = 100L;
+        int page = 1;
+        int size = 10;
+
+        // when
+        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
+
+        // then
+        assertThrows(DataNotFoundException.class, () -> wishListService.getWishLists(userId, page, size));
     }
 
     @Test

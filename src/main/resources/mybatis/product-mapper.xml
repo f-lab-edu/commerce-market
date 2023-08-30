@@ -37,7 +37,7 @@
     </select>
 
     <select id="findAll" parameterType="map" resultMap="productResultMap">
-        SELECT * FROM product LIMIT #{offset}, #{size}
+        SELECT * FROM product LIMIT #{offset}, #{limit}
     </select>
 
     <select id="countProduct" resultType="int">
@@ -47,7 +47,7 @@
     <select id="searchProduct" resultMap="productResultMap">
         SELECT * FROM product
         WHERE product_name LIKE CONCAT('%', #{keyword}, '%')
-        LIMIT #{offset}, #{size}
+        LIMIT #{offset}, #{limit}
     </select>
 
     <select id="searchProductCountByKeyword" resultType="int">

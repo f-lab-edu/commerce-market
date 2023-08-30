@@ -1,5 +1,3 @@
-# console color on
 spring:
-  output:
-    ansi:
-      enabled: always
+  profiles:
+    active: local

@@ -6,6 +6,7 @@ import flab.commercemarket.controller.product.dto.ProductResponseDto;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class ProductController {
 
     @PatchMapping("/{productId}")
     public ProductResponseDto patchProduct(@PathVariable("productId") long productId,
-                                           @RequestBody ProductDto productDto) {
+                                           @RequestBody @Validated ProductDto productDto) {
         Product product = productDto.toProduct();
         Product updateProduct = productService.updateProduct(productId, product);
 
@@ -36,7 +37,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     public ProductResponseDto getProduct(@PathVariable("productId") long productId) {
-        Product product = productService.findProduct(productId);
+        Product product = productService.getProduct(productId);
         return product.toProductResponseDto();
     }
 
@@ -59,7 +60,6 @@ public class ProductController {
 
     @GetMapping("/search")
     public PageResponseDto<ProductResponseDto> searchProduct(@RequestParam String keyword, @RequestParam int page, @RequestParam int size) {
-        // todo pagination 기능 추가
         List<Product> products = productService.searchProduct(keyword, page, size);
 
         int totalElements = productService.countSearchProductByKeyword(keyword);
@@ -76,8 +76,8 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
-    public void deleteProduct(@PathVariable("productId") long productId) {
-        productService.deleteProduct(productId);
+    public void deleteProduct(@PathVariable("productId") long productId, @RequestParam long loginUserId) {
+        productService.deleteProduct(productId, loginUserId);
     }
 
     @PostMapping("/{productId}/likes")

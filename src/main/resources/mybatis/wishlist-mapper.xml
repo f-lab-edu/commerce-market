@@ -35,4 +35,16 @@
     <delete id="deleteWishList" parameterType="long">
         DELETE FROM wish_list where id = #{id}
     </delete>
+
+    <select id="isExistentUser" resultType="boolean">
+        SELECT EXISTS(
+                       SELECT 1 FROM market_user WHERE id = #{userId}
+                   ) AS exist
+    </select>
+
+    <select id="isExistentProduct" resultType="boolean">
+        SELECT EXISTS(
+                       SELECT 1 FROM product WHERE id = #{productId}
+                   ) AS exist
+    </select>
 </mapper>

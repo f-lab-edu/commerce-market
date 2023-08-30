@@ -1,6 +1,8 @@
 package flab.commercemarket.product.service;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.exception.ForbiddenException;
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.mapper.ProductMapper;
 import flab.commercemarket.domain.product.vo.Product;
@@ -17,12 +19,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ProductServiceTest {
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private AuthorizationHelper authorizationHelper;
 
     @InjectMocks
     private ProductService productService;
@@ -101,7 +105,7 @@ class ProductServiceTest {
         // when
         when(productMapper.findById(productId)).thenReturn(Optional.of(product));
 
-        Product foundProduct = productService.findProduct(productId);
+        Product foundProduct = productService.getProduct(productId);
 
         // then
         assertThat(product).isEqualTo(foundProduct);
@@ -196,14 +200,32 @@ class ProductServiceTest {
     public void deleteProductTest() throws Exception {
         // given
         long productId = 1L;
+        long loginUserId = 100L;
+        Product product = makeProductFixture((int) productId);
+        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
+        doNothing().when(authorizationHelper).checkUserAuthorization(product.getSellerId(), loginUserId);
+
+        // when
+        productService.deleteProduct(product.getId(), loginUserId);
+
+        // then
+        verify(productMapper).deleteProduct(productId);
+    }
+
+    @Test
+    public void deleteProductTest_ForbiddenException() throws Exception {
+        // given
+        long productId = 1L;
+        long loginUserId = 100L;
+
         Product product = makeProductFixture((int) productId);
         when(productMapper.findById(productId)).thenReturn(Optional.of(product));
 
         // when
-        productService.deleteProduct(product.getId());
+        doThrow(new ForbiddenException("유저 권한 정보가 일치하지 않음")).when(authorizationHelper).checkUserAuthorization(product.getSellerId(), loginUserId);
 
         // then
-        verify(productMapper).deleteProduct(productId);
+        assertThrows(ForbiddenException.class, () -> productService.deleteProduct(productId, loginUserId));
     }
 
     @Test

@@ -3,8 +3,6 @@ package flab.commercemarket.domain.wishlist;
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
-import flab.commercemarket.domain.product.ProductService;
-import flab.commercemarket.domain.user.UserService;
 import flab.commercemarket.domain.wishlist.mapper.WishListMapper;
 import flab.commercemarket.domain.wishlist.vo.WishList;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +19,14 @@ import java.util.Optional;
 public class WishListService {
 
     private final WishListMapper wishListMapper;
-    private final UserService userService;
-    private final ProductService productService;
     private final AuthorizationHelper authorizationHelper;
-
 
     @Transactional
     public void registerWishList(long userId, long productId) {
         log.info("Start registerWishList");
 
-        userService.getUserById(userId);
-        productService.findProduct(productId);
+        checkUserExistence(userId);
+        checkValidProduct(productId);
         verifyDuplicatedWishList(userId, productId);
 
         wishListMapper.insertWishList(userId, productId);
@@ -39,19 +34,19 @@ public class WishListService {
     }
 
     @Transactional(readOnly = true)
-    public List<WishList> getWishLists(long userId, int page, int size) {
+    public List<WishList> findWishLists(long userId, int page, int size) {
         log.info("Start registerWishList");
 
         int limit = size;
         int offset = (page - 1) * size;
 
-        userService.getUserById(userId);
+        checkUserExistence(userId);
         log.info("Get WishList userId = {}", userId);
         return wishListMapper.getWishListItemByUserIdWithPagination(userId, limit, offset);
     }
 
     @Transactional(readOnly = true)
-    public int getWishListCountByUserId(long userId) {
+    public int findWishListCountByUserId(long userId) {
         log.info("Start getWishListCountByUserId = {}", userId);
 
         return wishListMapper.getWishListCountByUserId(userId);
@@ -86,5 +81,24 @@ public class WishListService {
             log.warn("wishListId = {}", wishListId);
             return new DataNotFoundException("조회한 위시리스트가 없음");
         });
+    }
+
+    private void checkUserExistence(long userId) {
+        log.info("Check Existent User. userId: {}", userId);
+
+        boolean result = wishListMapper.isExistentUser(userId);
+        if (!result) {
+            log.warn("userId: {}", userId);
+            throw new DataNotFoundException("해당 사용자가 존재하지 않음");
+        }
+    }
+
+    private void checkValidProduct(long productId) {
+        log.info("Check Existent Product. productId: {}", productId);
+
+        if (!wishListMapper.isExistentProduct(productId)) {
+            log.info("productId = {}", productId);
+            throw new DataNotFoundException("존재하지 않는 상품");
+        }
     }
 }
