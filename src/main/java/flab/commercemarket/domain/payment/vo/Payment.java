@@ -16,7 +16,7 @@ public class Payment {
     private String merchantUid;
     private String payMethod;
     private BigDecimal amount;
-    private PaymentStatus status;
+    private String status;
     private LocalDateTime paidAt;
     private LocalDateTime failedAt;
     private LocalDateTime cancelledAt;

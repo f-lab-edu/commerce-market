@@ -5,11 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
-import flab.commercemarket.controller.payment.dto.PaymentData;
-import flab.commercemarket.controller.payment.dto.PaymentDataResponse;
+import flab.commercemarket.controller.payment.dto.PaymentDataDto;
+import flab.commercemarket.controller.payment.dto.PaymentDataResponseDto;
 import flab.commercemarket.domain.payment.mapper.PaymentMapper;
+import flab.commercemarket.domain.payment.vo.ApiKeyInfo;
 import flab.commercemarket.domain.payment.vo.Payment;
-import flab.commercemarket.domain.payment.vo.PaymentStatus;
+import flab.commercemarket.domain.payment.vo.PaymentPrepareRequestInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,10 +30,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    @Value("${imp_key}")
+    @Value("${iamport.host}")
+    private String host;
+
+    @Value("${iamport.imp_key}")
     private String apiKey;
 
-    @Value("${imp_secret}")
+    @Value("${iamport.imp_secret}")
     private String apiSecret;
 
     private final PaymentMapper paymentMapper;
@@ -39,10 +44,9 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void processPayment(String merchantUid, BigDecimal amount) {
-        String apiUrl = "https://api.iamport.kr/payments/prepare";
-
-        log.info("Start persistRequestData");
+    public void processPayment(String merchantUid, BigDecimal amount) { // 사전검증
+        String apiUrl = urlMaker(host, "/payments/prepare");
+        log.info("Start persistRequestData. apiUrl: {}", apiUrl);
 
         isDuplicatedMerchantUid(merchantUid);
         checkMerchantUidNotNull(merchantUid);
@@ -54,10 +58,10 @@ public class PaymentService {
     }
 
     @Transactional
-    public void completePaymentVerification(String impUid, String merchantUid) {
+    public void completePaymentVerification(String impUid, String merchantUid) { // 사후검증
         log.info("Start completePaymentVerification. impUid: {}, merchantUid: {}", impUid, merchantUid);
 
-        PaymentData paymentData = fetchPaymentFromIamportServer(impUid); // 조회한 결제정보
+        PaymentDataDto paymentDataDto = fetchPaymentFromIamportServer(impUid); // 조회한 결제정보
 
         // DB에서 결제되어야 하는 금액 조회
         Payment foundPayment = getPaymentByMerchantUid(merchantUid);
@@ -65,15 +69,15 @@ public class PaymentService {
         log.info("foundAmount: {}", foundAmount);
 
         // 결제 검증
-        if (paymentData.getAmount() != foundAmount.intValue()) {
-            log.warn("결제금액 불일치. 위/변조된 결제. 결제 된 금액: {}, 결제 되어야하는 금액: {}", paymentData.getAmount(), foundAmount.intValue());
+        if (paymentDataDto.getAmount() != foundAmount.intValue()) {
+            log.warn("결제금액 불일치. 위/변조된 결제. 결제 된 금액: {}, 결제 되어야하는 금액: {}", paymentDataDto.getAmount(), foundAmount.intValue());
             // todo 결제 취소 연동
 
-            paymentMapper.updateCancelPayment(foundPayment.getId(), paymentData.toCanceledPayment());
+            paymentMapper.updateCancelPayment(foundPayment.getId(), paymentDataDto.toCanceledPayment());
             return;
         }
 
-        paymentMapper.updateCompletePayment(foundPayment.getId(), paymentData.toCompletePayment());
+        paymentMapper.updateCompletePayment(foundPayment.getId(), paymentDataDto.toCompletePayment());
     }
 
     public Payment getPayment(long paymentId) {
@@ -129,26 +133,34 @@ public class PaymentService {
     }
 
     private String getToken() {
-        String apiUrl = "https://api.iamport.kr/users/getToken";
+        String apiUrl = urlMaker(host, "/users/getToken");
+        log.info("Start getToken. url: {}", apiUrl);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String requestBody = String.format("{\"imp_key\": \"%s\", \"imp_secret\": \"%s\"}", apiKey, apiSecret);
-        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<String> responseEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, requestEntity, String.class);
-
         try {
+            ApiKeyInfo apiKeyInfo = ApiKeyInfo.builder()
+                    .apiKey(apiKey)
+                    .apiSecret(apiSecret)
+                    .build();
+
+            String requestBody = objectMapper.writeValueAsString(apiKeyInfo);
+            log.info("Complete serialization.");
+
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            log.info("Call Get Token API. url: {}", apiUrl);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, requestEntity, String.class);
+
             String responseBody = responseEntity.getBody();
-            log.info("Token Response: {}", responseBody);
+            log.info("Complete Get Token. ResponseBody: {}", responseBody);
 
             JsonNode jsonNode = objectMapper.readTree(responseBody);
             String accessToken = jsonNode.path("response").path("access_token").asText();
             return accessToken;
-        } catch (Exception e) {
-            log.error("API Request failed with status code: {}", responseEntity.getStatusCodeValue());
-            return null;
+        } catch (JsonProcessingException e) {
+            throw new RestClientException("Fail to json parsing", e);
         }
     }
 
@@ -160,12 +172,20 @@ public class PaymentService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + accessToken);
 
-        String paymentRequest = String.format("{\"merchant_uid\": \"%s\", \"amount\": %.2f}", merchantUid, amount);
+        PaymentPrepareRequestInfo prepareRequestInfo = PaymentPrepareRequestInfo.builder().merchantUid(merchantUid).amount(amount).build();
+
+        String requestBody = null;
+        try {
+            requestBody = objectMapper.writeValueAsString(prepareRequestInfo);
+            log.info("Complete serialization.");
+        } catch (JsonProcessingException e) {
+            throw new RestClientException("Fail to json parsing", e);
+        }
 
         ResponseEntity<String> response = restTemplate.exchange(
                 apiUrl,
                 HttpMethod.POST,
-                new HttpEntity<>(paymentRequest, headers),
+                new HttpEntity<>(requestBody, headers),
                 String.class);
 
         handleFailedResponse(response);
@@ -195,7 +215,7 @@ public class PaymentService {
 
     private void savePreValidationDataToDB(String merchantUid, BigDecimal amount) {
         Payment preparePayment = Payment.builder()
-                .status(PaymentStatus.PREPARE)
+                .status("prepare")
                 .merchantUid(merchantUid)
                 .amount(amount)
                 .build();
@@ -205,14 +225,11 @@ public class PaymentService {
         log.info("Save PrepareRequestData. merchantUid: {}", merchantUid);
     }
 
-    private PaymentData fetchPaymentFromIamportServer(String impUid) {
+    private PaymentDataDto fetchPaymentFromIamportServer(String impUid) {
         try {
-            PaymentDataResponse responseBody = executeGetPaymentApiCall(impUid);
+            PaymentDataResponseDto responseBody = executeGetPaymentApiCall(impUid);
 
-            log.info("responseBody.getCode(): {}", responseBody.getCode());
-            log.info("responseBody.getMessage(): {}", responseBody.getMessage());
-            log.info("responseBody.getResponse().getImp_uid(): {}", responseBody.getResponse().getImp_uid());
-            log.info("responseBody.getResponse().getMerchant_uid(): {}", responseBody.getResponse().getMerchant_uid());
+            log.info("response: {}", responseBody);
 
             return responseBody.getResponse();
         } catch (RestClientException | NullPointerException e) {
@@ -221,21 +238,30 @@ public class PaymentService {
         }
     }
 
-    private PaymentDataResponse executeGetPaymentApiCall(String impUid) {
-        String url = "https://api.iamport.kr/payments/" + impUid;
+    private PaymentDataResponseDto executeGetPaymentApiCall(String impUid) {
+        String apiUrl = urlMaker(host, "payments/" + impUid);
 
         String accessToken = getToken();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", accessToken);
 
-        log.info("Start API call");
-        ResponseEntity<PaymentDataResponse> paymentDataResponse = restTemplate.exchange(
-                url,
+        log.info("Start API call. apiUrl: {}", apiUrl);
+        ResponseEntity<PaymentDataResponseDto> paymentDataResponse = restTemplate.exchange(
+                apiUrl,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                PaymentDataResponse.class);
+                PaymentDataResponseDto.class);
         log.info("Success API call");
 
         return Objects.requireNonNull(paymentDataResponse.getBody(), "paymentDataResponse is null");
+    }
+
+    private String urlMaker(String host, String path) {
+        return UriComponentsBuilder.newInstance()
+                .scheme("https")
+                .host(host)
+                .path(path)
+                .build()
+                .toString();
     }
 }

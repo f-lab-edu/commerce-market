@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:h2:tcp://localhost/~/database/market
-    username: sa
+    url: jdbc:mysql://localhost:3306/market
+    username: root
     password:
-    driver-class-name: org.h2.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 mybatis:
   type-aliases-package: flab.commercemarket
@@ -15,5 +15,7 @@ jasypt:
   encryptor:
     bean: jasyptStringEncryptor
 
-imp_key: ENC(TP0S4I3d5gj7hxH5gVSrRCK5PbESBuXWTqPANtm1+h8=)
-imp_secret: ENC(F9R6giwITWVe6tXCkiv6rvHX/it3CBJEIibUBLX+3/NPzNT0tqcGe0t
+iamport:
+  host: api.iamport.kr
+  imp_key: ENC(TP0S4I3d5gj7hxH5gVSrRCK5PbESBuXWTqPANtm1+h8=)
+  imp_secret: ENC(F9R6giwITWVe6tXCkiv6rvHX/it3CBJEIibUBLX+3/NPzNT0tqcGe0tc9QWUoc2bdgFDTYKg5D1YG4mIix2IsWK+Zkdwa+M3IFZHLHp5p9kAUucmExCLIsygMcKDRXG8)

@@ -1,17 +1,17 @@
-package flab.commercemarket.controller.payment.dto;
+package flab.commercemarket.domain.payment.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Getter
+@Builder
 @NoArgsConstructor
-public class PaymentPreVerificationDto {
-
+@AllArgsConstructor
+public class PaymentPrepareRequestInfo {
     @JsonProperty("merchant_uid")
     private String merchantUid;
-
     private BigDecimal amount;
 }

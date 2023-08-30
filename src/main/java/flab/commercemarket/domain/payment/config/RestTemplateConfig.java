@@ -10,7 +10,7 @@ import java.time.Duration;
 @Configuration
 public class RestTemplateConfig {
 
-    @Bean
+    @Bean(name = "paymentRestTemplate")
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
                 .setConnectTimeout(Duration.ofSeconds(5))
