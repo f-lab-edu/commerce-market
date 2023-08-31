@@ -4,7 +4,7 @@ import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.domain.product.ProductService;
-import flab.commercemarket.domain.product.mapper.ProductMapper;
+import flab.commercemarket.domain.product.repository.ProductRepository;
 import flab.commercemarket.domain.product.vo.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +27,7 @@ import static org.mockito.Mockito.*;
 
 class ProductServiceTest {
     @Mock
-    private ProductMapper productMapper;
+    private ProductRepository productRepository;
 
     @Mock
     private AuthorizationHelper authorizationHelper;
@@ -53,7 +57,7 @@ class ProductServiceTest {
         assertThat(product.getDescription()).isEqualTo(registerProduct.getDescription());
         assertThat(product.getStockAmount()).isEqualTo(registerProduct.getStockAmount());
 
-        verify(productMapper).insertProduct(product);
+        verify(productRepository).save(product);
     }
 
     @Test
@@ -65,7 +69,7 @@ class ProductServiceTest {
         Product updatedProductData = makeProductFixture(2);
 
         // when
-        when(productMapper.findById(productId)).thenReturn(Optional.of(existProduct));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(existProduct));
         Product updateProduct = productService.updateProduct(productId, updatedProductData);
 
         // then
@@ -86,13 +90,30 @@ class ProductServiceTest {
         Product updatedProductData = makeProductFixture(1);
 
         // when
-        when(productMapper.findById(productId)).thenThrow(DataNotFoundException.class);
-
+        when(productRepository.findById(productId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
             productService.updateProduct(productId, updatedProductData);
         });
+    }
+
+    @Test
+    @DisplayName("상품을 등록한 사용자와 update를 요청하는 사용자가 다르면 예외를 발생시켜야한다.")
+    public void updateProductTest_Forbidden_exception() throws Exception {
+        // given
+        long productId = 1L;
+        Product foundProduct = Product.builder().id(productId).sellerId(1L).build();
+        Product data = Product.builder().id(productId).sellerId(100L).build();
+
+        // when
+        when(productRepository.findById(productId)).thenReturn(Optional.of(foundProduct));
+        doThrow(ForbiddenException.class)
+                .when(authorizationHelper)
+                .checkUserAuthorization(foundProduct.getSellerId(), data.getSellerId());
+
+        // then
+        assertThrows(ForbiddenException.class, () -> productService.updateProduct(productId, data));
     }
 
     @Test
@@ -103,7 +124,7 @@ class ProductServiceTest {
         Product product = makeProductFixture((int)productId);
 
         // when
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
         Product foundProduct = productService.getProduct(productId);
 
@@ -117,83 +138,49 @@ class ProductServiceTest {
         // given
         int page = 2;
         int size = 3;
+        Pageable pageable = PageRequest.of(page - 1, size);
+
         Product product1 = makeProductFixture(1);
         Product product2 = makeProductFixture(2);
         Product product3 = makeProductFixture(3);
         Product product4 = makeProductFixture(4);
 
-        List<Product> expectedResults = Arrays.asList(product4);
+        List<Product> productList = Arrays.asList(product4);
 
-        // when
-        int offset = (page - 1) * size;
-        when(productMapper.findAll(offset, size)).thenReturn(expectedResults);
-        List<Product> foundProducts = productService.findProducts(page, size);
+        Page<Product> expectedPage = new PageImpl<>(productList, pageable, productList.size());
 
-        // then
-        assertThat(expectedResults).isEqualTo(foundProducts);
+        when(productRepository.findAll(pageable)).thenReturn(expectedPage);
 
+        // When
+        Page<Product> resultPage = productService.findProducts(page, size);
+
+        // Then
+        assertThat(resultPage.getContent()).isEqualTo(productList);
+        assertThat(resultPage.getPageable().getPageNumber()).isEqualTo(page - 1);
+        assertThat(resultPage.getPageable().getPageSize()).isEqualTo(size);
     }
 
     @Test
-    @DisplayName("상품 목록의 전체 개수를 반환한다.")
-    public void getProductCountTest() throws Exception {
-        // given
-        Product product1 = makeProductFixture(1);
-        Product product2 = makeProductFixture(2);
-        Product product3 = makeProductFixture(3);
-        Product product4 = makeProductFixture(4);
-
-        List<Product> expectedResults = Arrays.asList(product1, product2, product3, product4);
-
-        // when
-        when(productMapper.countProduct()).thenReturn(expectedResults.size());
-        int result = productService.countProducts();
-
-        // then
-        assertThat(expectedResults.size()).isEqualTo(result);
-    }
-
-    @Test
-    @DisplayName("키워드 조회 기능에 페이지네이션이 적용 되어야한다.")
-    public void searchProductTest() throws Exception {
-        // given
-        int page = 1;
+    void searchProductTest() {
+        // Given
+        int page = 2;
         int size = 3;
+        String keyword = "example";
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        Product product1 = makeProductFixture(1);
-        Product product2 = makeProductFixture(2);
-        Product product3 = makeProductFixture(3);
-        Product product4 = makeProductFixture(4);
+        List<Product> productList = productListFixture();
 
-        List<Product> expectedResults = Arrays.asList(product1, product2, product3);
+        Page<Product> expectedPage = new PageImpl<>(productList, pageable, productList.size());
 
-        // when
-        int offset = (page - 1) * size;
-        when(productMapper.searchProduct("product", offset, size)).thenReturn(expectedResults);
+        when(productRepository.findByKeyword(pageable, keyword)).thenReturn(expectedPage);
 
-        // then
-        List<Product> actualResults = productService.searchProduct("product", page, size);
-        assertThat(actualResults).isEqualTo(expectedResults);
-    }
+        // When
+        Page<Product> resultPage = productService.searchProduct(keyword, page, size);
 
-    @Test
-    @DisplayName("특정 키워드로 조회한 데이터의 전체 개수를 반환한다.")
-    public void searchProductCountByKeywordTest() throws Exception {
-        // given
-        String keyword = "computer";
-        Product product1 = makeProductFixture(1);
-        Product product2 = makeProductFixture(2);
-        Product product3 = makeProductFixture(3);
-        Product product4 = makeProductFixture(4);
-
-        List<Product> expectedResults = Arrays.asList(product1, product2, product3, product4);
-
-        // when
-        when(productMapper.searchProductCountByKeyword(keyword)).thenReturn(expectedResults.size());
-        int result = productService.countSearchProductByKeyword(keyword);
-
-        // then
-        assertThat(expectedResults.size()).isEqualTo(result);
+        // Then
+        assertThat(resultPage.getContent()).isEqualTo(productList);
+        assertThat(resultPage.getPageable().getPageNumber()).isEqualTo(page - 1);
+        assertThat(resultPage.getPageable().getPageSize()).isEqualTo(size);
     }
 
     @Test
@@ -202,14 +189,14 @@ class ProductServiceTest {
         long productId = 1L;
         long loginUserId = 100L;
         Product product = makeProductFixture((int) productId);
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         doNothing().when(authorizationHelper).checkUserAuthorization(product.getSellerId(), loginUserId);
 
         // when
         productService.deleteProduct(product.getId(), loginUserId);
 
         // then
-        verify(productMapper).deleteProduct(productId);
+        verify(productRepository).delete(product);
     }
 
     @Test
@@ -219,7 +206,7 @@ class ProductServiceTest {
         long loginUserId = 100L;
 
         Product product = makeProductFixture((int) productId);
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
         // when
         doThrow(new ForbiddenException("유저 권한 정보가 일치하지 않음")).when(authorizationHelper).checkUserAuthorization(product.getSellerId(), loginUserId);
@@ -229,19 +216,16 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("feedback이 like면 Product의 likeCount가 1 증가한다")
     public void updateLikeCountTest_Like() throws Exception {
         // given
         long productId = 123L;
-        Product product = new Product();
-        product.setLikeCount(10);
+        Product product = Product.builder().id(productId).likeCount(10).build();
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
-
-        when(productMapper.findById(productId)).thenReturn(Optional.of(product));
-
+        // when
         productService.updateLikeCount(productId);
 
-        assertThat(11).isEqualTo(product.getLikeCount());
+        verify(productRepository, times(1)).updateLikeCount(productId, product.getLikeCount() + 1);
     }
 
     private Product makeProductFixture(int param) {
@@ -252,6 +236,23 @@ class ProductServiceTest {
         product.setImageUrl("url" + param);
         product.setDescription("description"+param);
         product.setStockAmount(param*10);
+        product.setSellerId(param);
         return product;
+    }
+
+    private List<Product> productListFixture() {
+        Product product1 = new Product();
+        product1.setId(1L);
+        product1.setName("Example Product 1");
+
+        Product product2 = new Product();
+        product2.setId(2L);
+        product2.setName("Product 2");
+
+        Product product3 = new Product();
+        product3.setId(3L);
+        product3.setName("Example Product 3");
+
+        return Arrays.asList(product1, product2, product3);
     }
 }
