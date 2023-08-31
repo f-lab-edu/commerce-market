@@ -14,6 +14,6 @@ import java.util.List;
 public class PageResponseDto<T> {
     private int page;
     private int size;
-    private int totalElements;
+    private long totalElements;
     private List<T> content;
 }

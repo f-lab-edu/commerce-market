@@ -3,12 +3,17 @@ package flab.commercemarket.domain.product.vo;
 import flab.commercemarket.controller.product.dto.ProductResponseDto;
 import lombok.*;
 
+import javax.persistence.*;
+
+@Entity
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private int price;
