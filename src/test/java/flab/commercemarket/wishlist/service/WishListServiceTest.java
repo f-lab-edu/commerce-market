@@ -9,38 +9,41 @@ import flab.commercemarket.domain.product.vo.Product;
 import flab.commercemarket.domain.user.UserService;
 import flab.commercemarket.domain.user.vo.User;
 import flab.commercemarket.domain.wishlist.WishListService;
-import flab.commercemarket.domain.wishlist.mapper.WishListMapper;
+import flab.commercemarket.domain.wishlist.repository.WishListRepository;
 import flab.commercemarket.domain.wishlist.vo.WishList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 class WishListServiceTest {
 
-    @Mock
-    private WishListMapper wishListMapper;
 
     @Mock
     private UserService userService;
 
     @Mock
-    ProductService productService;
+    private ProductService productService;
 
     @Mock
-    AuthorizationHelper authorizationHelper;
+    private WishListRepository wishListRepository;
+
+    @Mock
+    private AuthorizationHelper authorizationHelper;
 
     @InjectMocks
     private WishListService wishListService;
@@ -51,42 +54,37 @@ class WishListServiceTest {
     }
 
     @Test
-    public void notNullCheck() throws Exception {
-        assertThat(wishListMapper).isNotNull();
-        assertThat(userService).isNotNull();
-        assertThat(productService).isNotNull();
-        assertThat(authorizationHelper).isNotNull();
-    }
-
-    @Test
     public void registerWishListTest_success() throws Exception {
         // given
         long userId = 1L;
-        long productId = 1L;
-        User user = userFixture(userId);
-        Product product = productFixture(productId);
+        long productId = 2L;
+        User user = User.builder().id(userId).build();
+        Product product = Product.builder().id(productId).build();
 
         // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
-        when(wishListMapper.isExistentProduct(productId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(productService.getProduct(productId)).thenReturn(product);
+        when(productService.getProduct(userId)).thenReturn(product);
+        WishList expectedWishList = WishList.builder().product(product).user(user).build();
+
+        when(wishListRepository.save(any(WishList.class))).thenReturn(expectedWishList);
+        WishList actualWishList = wishListService.registerWishList(userId, productId);
 
         // then
-        wishListService.registerWishList(userId, productId);
-
-        verify(wishListMapper, Mockito.times(1)).insertWishList(userId, productId);
+        assertNotNull(actualWishList);
+        assertThat(actualWishList.getId()).isEqualTo(expectedWishList.getId());
+        assertThat(actualWishList.getUserId()).isEqualTo(expectedWishList.getUserId());
+        assertThat(actualWishList.getProductId()).isEqualTo(expectedWishList.getProductId());
     }
 
     @Test
     @DisplayName("찜목록 등록시 사용자가 없으면 DataNotFoundException 예외 발생")
     public void registerWishListTest_not_found_user() throws Exception {
         // given
-        long productId = 1L;
         long userId = 1L;
+        long productId = 2L;
 
         // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
+        when(userService.getUserById(userId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> wishListService.registerWishList(userId, productId));
@@ -96,11 +94,11 @@ class WishListServiceTest {
     @DisplayName("찜목록 등록시 등록하는 상품이 없으면 DataNotFoundException 예외 발생")
     public void registerWishListTest_not_found_product() throws Exception {
         // given
-        long productId = 1L;
         long userId = 1L;
+        long productId = 2L;
 
         // when
-        when(wishListMapper.isExistentProduct(productId)).thenReturn(false);
+        when(productService.getProduct(productId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> wishListService.registerWishList(userId, productId));
@@ -111,42 +109,47 @@ class WishListServiceTest {
     public void registerWishListTest_DuplicateWishList() throws Exception {
         // given
         long userId = 1L;
-        long productId = 1L;
-        User user = userFixture(userId);
-        Product product = productFixture(productId);
-        List<WishList> userWishLists = wishListsFixture();
+        long duplicatedProductId = 2L;
+        User user = User.builder().id(userId).build();
+        Product product = Product.builder().id(duplicatedProductId).build();
+
+        List<WishList> userWishLists = userWishListFixture(user);
 
         // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
-        when(wishListMapper.isExistentProduct(userId)).thenReturn(true);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(productService.getProduct(productId)).thenReturn(product);
-        when(wishListMapper.getWishListItemByUserId(userId)).thenReturn(userWishLists);
-        when(wishListMapper.findById(userId)).thenReturn(Optional.of(new WishList())); // Mocking an existing duplicate item
+        when(productService.getProduct(userId)).thenReturn(product);
+        when(wishListRepository.isExistProductInUserWishList(userId, duplicatedProductId)).thenReturn(userWishLists);
+        // then
 
-        DuplicateDataException exception = assertThrows(DuplicateDataException.class,
-                () -> wishListService.registerWishList(userId, productId));
-
-        assertEquals("이미 위시리스트에 존재하는 상품입니다.", exception.getMessage());
+        assertThrows(DuplicateDataException.class, () -> wishListService.registerWishList(userId, duplicatedProductId));
     }
 
     @Test
-    @DisplayName("찜목록을 정상적으로 조회하는 경우")
-    public void findWishListsTest() throws Exception {
+    @DisplayName("WishList 목록 조회 성공 테스트")
+    public void findWishListsTest() {
         // given
         long userId = 1L;
-        int page = 2;
-        int size = 10;
+        User user = User.builder().id(userId).build();
+
+        List<WishList> fakeWishLists = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            WishList wishList = new WishList();
+            fakeWishLists.add(wishList);
+        }
+
+        when(userService.getUserById(userId)).thenReturn(user);
 
         // when
-        List<WishList> wishLists = new ArrayList<>();
-        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
-        when(userService.getUserById(userId)).thenReturn(new User());
-        when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists);
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<WishList> fakeWishListPage = new PageImpl<>(fakeWishLists, pageable, fakeWishLists.size());
+        when(wishListRepository.findAllByUser(pageable, user)).thenReturn(fakeWishListPage);
+
+        Page<WishList> result = wishListService.findWishLists(userId, 1, 10);
 
         // then
-        List<WishList> result = wishListService.getWishLists(userId, page, size);
-        assertThat(wishLists).isEqualTo(result);
+        assertEquals(fakeWishListPage, result);
+        verify(userService, times(1)).getUserById(userId);
+        verify(wishListRepository, times(1)).findAllByUser(pageable, user);
     }
 
     @Test
@@ -158,82 +161,30 @@ class WishListServiceTest {
         int size = 10;
 
         // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
+        when(userService.getUserById(userId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> wishListService.findWishLists(userId, page, size));
     }
 
     @Test
-    @DisplayName("WishList 조회 페이지네이션 적용")
-    public void findWishListsTest_pagination() throws Exception {
-        // given
-        long userId = 1L;
-        int page = 1;
-        int size = 10;
-
-        List<WishList> wishLists = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            WishList wishList = new WishList((long) i, i, userId);
-            wishLists.add(wishList);
-        }
-
-        // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(true);
-        when(userService.getUserById(userId)).thenReturn(new User());
-        when(wishListMapper.getWishListItemByUserIdWithPagination(userId, size, page - 1)).thenReturn(wishLists.subList(0, size));
-
-        List<WishList> result = wishListService.getWishLists(userId, page, size);
-
-        // then
-        assertThat(result).isEqualTo(wishLists.subList(0, size));
-    }
-
-    @Test
-    public void findWishLists_not_found_user() throws Exception {
-        // given
-        long userId = 100L;
-        int page = 1;
-        int size = 10;
-
-        // when
-        when(wishListMapper.isExistentUser(userId)).thenReturn(false);
-
-        // then
-        assertThrows(DataNotFoundException.class, () -> wishListService.getWishLists(userId, page, size));
-    }
-
-    @Test
-    public void getWishListCountByUserIdTest() throws Exception {
-        // given
-        long userId = 1L;
-        int count = 5;
-
-        // when
-        when(wishListMapper.getWishListCountByUserId(userId)).thenReturn(count);
-        int result = wishListService.getWishListCountByUserId(userId);
-
-        // then
-        assertThat(count).isEqualTo(result);
-    }
-
-    @Test
     public void deleteWishListTest_success() throws Exception {
         // given
         long wishListId = 1L;
-        long userId = 1L;
-        long productId = 1L;
+        long userId = 2L;
+        long productId = 3L;
 
-        WishList wishList = new WishList(wishListId, productId, userId);
+        User user = User.builder().id(userId).build();
+        Product product = Product.builder().id(productId).build();
+        WishList wishList = new WishList(wishListId, user, product);
 
-        when(wishListMapper.findById(wishListId)).thenReturn(Optional.of(wishList));
+        when(wishListRepository.getWishListById(wishListId)).thenReturn(Optional.of(wishList));
         doNothing().when(authorizationHelper).checkUserAuthorization(userId, wishList.getUserId());
-
-        // when
         wishListService.deleteWishList(userId, wishListId);
 
+        // when
         verify(authorizationHelper, times(1)).checkUserAuthorization(userId, wishList.getUserId());
-        verify(wishListMapper, times(1)).deleteWishList(wishListId);
+        verify(wishListRepository, times(1)).delete(wishList);
     }
 
     @Test
@@ -241,18 +192,19 @@ class WishListServiceTest {
     public void deleteWishListTest_WishListNotFound() throws Exception {
         // given
         long wishListId = 1L;
-        long userId = 1L;
+        long userId = 2L;
+        long productId = 3L;
+
+        User user = User.builder().id(userId).build();
+        Product product = Product.builder().id(productId).build();
+        WishList wishList = new WishList(wishListId, user, product);
 
         // when
-        when(wishListMapper.findById(wishListId)).thenReturn(Optional.empty()); // Mocking a non-existent wishlist
+        when(wishListRepository.getWishListById(wishListId)).thenThrow(DataNotFoundException.class);
 
-        DataNotFoundException exception = assertThrows(DataNotFoundException.class,
-                () -> wishListService.deleteWishList(userId, wishListId));
-
-        assertEquals("조회한 위시리스트가 없음", exception.getMessage());
-
-        verify(wishListMapper, never()).deleteWishList(wishListId);
-
+        // then
+        assertThrows(DataNotFoundException.class, () -> wishListService.deleteWishList(userId, productId));
+        verify(wishListRepository, never()).delete(wishList);
     }
 
     @Test
@@ -264,29 +216,27 @@ class WishListServiceTest {
 
         long differentUserId = 789L;
 
-        WishList wishList = new WishList(wishListId, productId, userId);
-        when(wishListMapper.findById(wishListId)).thenReturn(Optional.of(wishList));
+        User user = User.builder().id(userId).build();
+        User differentUser = User.builder().id(differentUserId).build();
+        Product product = Product.builder().id(productId).build();
+        WishList wishList = new WishList(wishListId, user, product);
 
+        when(wishListRepository.getWishListById(wishListId)).thenReturn(Optional.of(wishList));
 
         doThrow(new ForbiddenException("유저 권한정보가 일치하지 않음")).when(authorizationHelper)
-                .checkUserAuthorization(userId, differentUserId);
+                .checkUserAuthorization(user.getId(), differentUser.getId());
 
         assertThrows(ForbiddenException.class, () -> wishListService.deleteWishList(differentUserId, wishListId));
     }
 
-    private User userFixture(long userId) {
-        return new User(userId, "username", "password", "name", "address", "01012345678", "abc@gmail.com");
+    private List<WishList> userWishListFixture(User user) {
+        return Arrays.asList(
+                new WishList(1L, user, Product.builder().id(1L).build()),
+                new WishList(2L, user, Product.builder().id(2L).build()),
+                new WishList(3L, user, Product.builder().id(3L).build()),
+                new WishList(4L, user, Product.builder().id(4L).build()),
+                new WishList(5L, user, Product.builder().id(5L).build())
+        );
     }
 
-    private Product productFixture(long productId) {
-        return new Product(productId, "productName", 1000, "url", "description", 100, 1, 0, 0);
-    }
-
-    private List<WishList> wishListsFixture() {
-        List<WishList> userWishLists = new ArrayList<>();
-        userWishLists.add(new WishList(1L, 1L, 1L));
-        userWishLists.add(new WishList(2L, 2L, 1L));
-        userWishLists.add(new WishList(3L, 3L, 1L));
-        return userWishLists;
-    }
 }
