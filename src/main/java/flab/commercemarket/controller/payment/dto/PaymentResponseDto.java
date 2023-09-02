@@ -5,32 +5,25 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentResponseDto {
-    private boolean success;
+    private Long id;
     private String impUid;
-    private String payMethod;
     private String merchantUid;
-    private String name;
-    private int paidAmount;
-    private String currency;
-    private String pgProvider;
-    private String pgType;
-    private String pgTid;
-    private String applyNum;
-    private String buyerName;
-    private String buyerEmail;
-    private String buyerTel;
-    private String buyerAddr;
-    private String customData;
+    private String payMethod;
+    private BigDecimal amount;
     private String status;
-    private long paidAt;
+    private LocalDateTime paidAt;
+    private LocalDateTime failedAt;
+    private LocalDateTime cancelledAt;
     private String receiptUrl;
-    private String cardName;
-    private String bankName;
-    private int cardQuota;
-    private String cardNumber;
+    private String pgProvider;
+    private String buyerName;
+    private boolean success;
 }
