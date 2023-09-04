@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -74,12 +75,18 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Product> searchProduct(String keyword, int page, int size) {
+    public List<Product> searchProduct(String keyword, int page, int size) {
         log.info("Start searchProduct with keyword. keyword = {}", keyword);
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        return productRepository.findByKeyword(pageable, keyword);
+        return productRepository.findByKeyword(keyword, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long countSearchProductByKeyword(String keyword) {
+        log.info("Start countSearchProductByKeyword. keyword = {}", keyword);
+        return productRepository.countSearchProductByKeyword(keyword);
     }
 
     @Transactional
@@ -100,8 +107,7 @@ public class ProductService {
         int likeCount = product.getLikeCount();
         int newLikeCount = likeCount + 1;
 
-        productRepository.updateLikeCount(productId, newLikeCount);
-
-        log.info("New LikeCount = {}", newLikeCount);
+        product.setLikeCount(newLikeCount);
+        productRepository.save(product);
     }
 }

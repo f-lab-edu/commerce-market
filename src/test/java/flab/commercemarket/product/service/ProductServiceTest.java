@@ -162,25 +162,41 @@ class ProductServiceTest {
 
     @Test
     void searchProductTest() {
-        // Given
+        // given
         int page = 2;
         int size = 3;
         String keyword = "example";
         Pageable pageable = PageRequest.of(page - 1, size);
-
         List<Product> productList = productListFixture();
 
-        Page<Product> expectedPage = new PageImpl<>(productList, pageable, productList.size());
+        when(productRepository.findByKeyword(keyword, pageable)).thenReturn(productList);
 
-        when(productRepository.findByKeyword(pageable, keyword)).thenReturn(expectedPage);
+        // when
+        List<Product> result = productService.searchProduct(keyword, page, size);
 
-        // When
-        Page<Product> resultPage = productService.searchProduct(keyword, page, size);
+        // then
+        verify(productRepository).findByKeyword(keyword, pageable);
+        assertThat(productList.size()).isEqualTo(result.size());
+    }
 
-        // Then
-        assertThat(resultPage.getContent()).isEqualTo(productList);
-        assertThat(resultPage.getPageable().getPageNumber()).isEqualTo(page - 1);
-        assertThat(resultPage.getPageable().getPageSize()).isEqualTo(size);
+    @Test
+    @DisplayName("특정 키워드로 조회한 데이터의 전체 개수를 반환한다.")
+    public void searchProductCountByKeywordTest() throws Exception {
+        // given
+        String keyword = "computer";
+        Product product1 = makeProductFixture(1);
+        Product product2 = makeProductFixture(2);
+        Product product3 = makeProductFixture(3);
+        Product product4 = makeProductFixture(4);
+
+        List<Product> expectedResults = Arrays.asList(product1, product2, product3, product4);
+
+        // when
+        when(productRepository.countSearchProductByKeyword(keyword)).thenReturn((long) expectedResults.size());
+        long result = productService.countSearchProductByKeyword(keyword);
+
+        // then
+        assertThat(expectedResults.size()).isEqualTo(result);
     }
 
     @Test
@@ -225,7 +241,7 @@ class ProductServiceTest {
         // when
         productService.updateLikeCount(productId);
 
-        verify(productRepository, times(1)).updateLikeCount(productId, product.getLikeCount() + 1);
+        assertThat(product.getLikeCount()).isEqualTo(11);
     }
 
     private Product makeProductFixture(int param) {

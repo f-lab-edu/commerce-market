@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,16 +60,17 @@ public class ProductController {
 
     @GetMapping("/search")
     public PageResponseDto<ProductResponseDto> searchProduct(@RequestParam String keyword, @RequestParam int page, @RequestParam int size) {
-        Page<Product> productPage = productService.searchProduct(keyword, page, size);
+        List<Product> products = productService.searchProduct(keyword, page, size);
+        long totalElements = productService.countSearchProductByKeyword(keyword);
 
-        List<ProductResponseDto> productResponseDto = productPage.stream()
+        List<ProductResponseDto> productResponseDto = products.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
 
         return PageResponseDto.<ProductResponseDto>builder()
                 .page(page)
                 .size(size)
-                .totalElements(productPage.getTotalElements())
+                .totalElements(totalElements)
                 .content(productResponseDto)
                 .build();
     }
