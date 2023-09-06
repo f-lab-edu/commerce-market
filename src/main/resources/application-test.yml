@@ -1,9 +1,17 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/market
-    username: root
+    url: jdbc:h2:tcp://localhost/~/h2db/market
+    username: sa
     password:
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
 
 mybatis:
   type-aliases-package: flab.commercemarket

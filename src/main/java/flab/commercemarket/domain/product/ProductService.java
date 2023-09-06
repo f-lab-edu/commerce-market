@@ -2,10 +2,13 @@ package flab.commercemarket.domain.product;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
-import flab.commercemarket.domain.product.mapper.ProductMapper;
+import flab.commercemarket.domain.product.repository.ProductRepository;
 import flab.commercemarket.domain.product.vo.Product;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,18 +22,19 @@ import java.util.Optional;
 public class ProductService {
 
     private final AuthorizationHelper authorizationHelper;
-    private final ProductMapper productMapper;
+    private final ProductRepository productRepository;
 
+    @Transactional
     public Product registerProduct(Product product) {
         log.info("Start registerProduct");
 
-        // todo 인증로직 구현 후 product에 sellerID를 묶어주어야함.
-        productMapper.insertProduct(product);
+        productRepository.save(product);
 
         log.info("Create Product. {}", product);
         return product;
     }
 
+    @Transactional
     public Product updateProduct(long productId, Product data) {
         log.info("Start updateProduct");
 
@@ -44,60 +48,57 @@ public class ProductService {
         foundProduct.setDescription(data.getDescription());
         foundProduct.setStockAmount(data.getStockAmount());
 
-        productMapper.updateProduct(foundProduct);
+        productRepository.save(foundProduct);
 
         log.info("Update Product. productId = {}", productId);
         return foundProduct;
     }
 
+    @Transactional(readOnly = true)
     public Product getProduct(long productId) {
         log.info("Start get ProductId: {}", productId);
 
-        Optional<Product> optionalProduct = productMapper.findById(productId);
+        Optional<Product> optionalProduct = productRepository.findById(productId);
         return optionalProduct.orElseThrow(() -> {
             log.info("productId = {}", productId);
             return new DataNotFoundException("조회한 상품 정보가 없음");
         });
     }
 
-    public List<Product> findProducts(int page, int size) {
+    @Transactional(readOnly = true)
+    public Page<Product> findProducts(int page, int size) {
         log.info("Find All Product. page = {}, size = {}", page, size);
-        int limit = size;
-        int offset = (page - 1) * size;
 
-        return productMapper.findAll(offset, limit);
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        return productRepository.findAll(pageable);
     }
 
-    public int countProducts() {
-        log.info("Start getProductCount");
-
-        return productMapper.countProduct();
-    }
-
+    @Transactional(readOnly = true)
     public List<Product> searchProduct(String keyword, int page, int size) {
         log.info("Start searchProduct with keyword. keyword = {}", keyword);
 
-        int limit = size;
-        int offset = (page -1) * size;
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        return productMapper.searchProduct(keyword, offset, limit);
+        return productRepository.findByKeyword(keyword, pageable);
     }
 
-    public int countSearchProductByKeyword(String keyword) {
+    @Transactional(readOnly = true)
+    public long countSearchProductByKeyword(String keyword) {
         log.info("Start countSearchProductByKeyword. keyword = {}", keyword);
-
-        return productMapper.searchProductCountByKeyword(keyword);
+        return productRepository.countSearchProductByKeyword(keyword);
     }
 
+    @Transactional
     public void deleteProduct(long productId, long loginUserId) {
         Product foundProduct = getProduct(productId);
 
         authorizationHelper.checkUserAuthorization(foundProduct.getSellerId(), loginUserId);
-
-        productMapper.deleteProduct(foundProduct.getId());
+        productRepository.delete(foundProduct);
         log.info("Delete Product. ProductId = {}", productId);
     }
 
+    @Transactional
     public void updateLikeCount(long productId) {
         log.info("Start increaseLikeCount");
         Product product = getProduct(productId);
@@ -107,8 +108,6 @@ public class ProductService {
         int newLikeCount = likeCount + 1;
 
         product.setLikeCount(newLikeCount);
-        productMapper.updateLikeCount(product);
-
-        log.info("New LikeCount = {}", newLikeCount);
+        productRepository.save(product);
     }
 }

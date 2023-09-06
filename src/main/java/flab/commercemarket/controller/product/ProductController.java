@@ -6,6 +6,7 @@ import flab.commercemarket.controller.product.dto.ProductResponseDto;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,17 +44,16 @@ public class ProductController {
 
     @GetMapping
     public PageResponseDto<ProductResponseDto> getProducts(@RequestParam int page, @RequestParam int size) {
-        List<Product> products = productService.findProducts(page, size);
+        Page<Product> productPage = productService.findProducts(page, size);
 
-        int totalElements = productService.countProducts();
-        List<ProductResponseDto> productResponseDto = products.stream()
+        List<ProductResponseDto> productResponseDto = productPage.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
 
         return PageResponseDto.<ProductResponseDto>builder()
                 .page(page)
                 .size(size)
-                .totalElements(totalElements)
+                .totalElements(productPage.getTotalElements())
                 .content(productResponseDto)
                 .build();
     }
@@ -61,8 +61,8 @@ public class ProductController {
     @GetMapping("/search")
     public PageResponseDto<ProductResponseDto> searchProduct(@RequestParam String keyword, @RequestParam int page, @RequestParam int size) {
         List<Product> products = productService.searchProduct(keyword, page, size);
+        long totalElements = productService.countSearchProductByKeyword(keyword);
 
-        int totalElements = productService.countSearchProductByKeyword(keyword);
         List<ProductResponseDto> productResponseDto = products.stream()
                 .map(Product::toProductResponseDto)
                 .collect(Collectors.toList());
