@@ -1,91 +1,87 @@
 package flab.commercemarket.domain.user;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.domain.user.mapper.UserMapper;
+import flab.commercemarket.common.exception.DuplicateDataException;
+import flab.commercemarket.domain.user.repository.UserRepository;
 import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
 
+    @Transactional
     public User join(User user) {
         log.info("Start join User");
 
-        validateDuplicateUser(user);
-        int insertedRowCnt = userMapper.save(user);
+        validateDuplicateUser(user.getUsername());
+        User createdUser = userRepository.save(user);
 
-        log.info("Create user. {}", user);
-        return user;
+        log.info("Create user. {}", user.getUsername());
+        return createdUser;
     }
 
-    public List<User> findUsers() {
+    @Transactional(readOnly = true)
+    public Page<User> findUsers(int page, int size) {
         log.info("Start findUsers");
 
-        List<User> foundUsers = userMapper.findAll();
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<User> foundUserList = userRepository.findAll(pageable);
 
-        log.info("FindUsers. {}", foundUsers);
-        return foundUsers;
+        log.info("FoundUsers. {}", foundUserList);
+        return foundUserList;
     }
 
-    public User getUser(String name, String username) {
-        log.info("Start getUserByNameAndUsername");
-
-        return userMapper.findByNameAndUsername(name, username)
-                .orElseThrow(() -> new DataNotFoundException("존재하지 않는 유저입니다."));
-    }
-
-    public User getUserById(Long id) {
+    @Transactional(readOnly = true)
+    public User getUserById(long id) {
         log.info("Start getUserById");
 
-        return userMapper.findById(id)
+        return userRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
     }
 
-    public User updateOne(Long id, User userForUpdate) {
+    @Transactional
+    public User updateOne(long userId, User userForUpdate) {
         log.info("Start update User");
 
-        User userBeforeUpdate = checkExistingUser(id);
-        int updatedRowCnt = userMapper.update(id, userForUpdate);
-        userForUpdate.setId(id);
+        User foundUser = getUserById(userId);
 
-        log.info("Update User. {}", userForUpdate);
-        return userForUpdate;
+        foundUser.setUsername(userForUpdate.getUsername());
+        foundUser.setPassword(userForUpdate.getPassword());
+        foundUser.setName(userForUpdate.getName());
+        foundUser.setAddress(userForUpdate.getAddress());
+        foundUser.setPhoneNumber(userForUpdate.getPhoneNumber());
+        foundUser.setEmail(userForUpdate.getEmail());
+
+        return foundUser;
     }
 
-    public void deleteOne(Long id) {
+    @Transactional
+    public void deleteOne(long id) {
         log.info("Start delete User");
 
-        int deletedRowCnt = userMapper.delete(id);
-        log.info("Delete User. userId = {}", id);
+        User foundUser = getUserById(id);
+        userRepository.delete(foundUser);
+        log.info("Delete User. userId = {}", foundUser.getId());
     }
 
-    private void validateDuplicateUser(User user) {
+    private void validateDuplicateUser(String username) {
         log.info("Start validateDuplicate User");
 
-        userMapper.findByUsername(user.getUsername())
-                .ifPresent(u -> {
-                    throw new IllegalStateException("이미 존재하는 회원입니다.");
-                });
-
-        log.info("Duplicate check done. username = {}", user.getUsername());
-    }
-
-    private User checkExistingUser(Long id) {
-        log.info("Start checkExistingUser");
-
-        Optional<User> userBeingVerified = userMapper.findById(id);
-        return userBeingVerified.orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없음"));
+        boolean result = userRepository.isAlreadyExistUser(username);
+        if (result) {
+            throw new DuplicateDataException("이미 존재하는 사용자");
+        }
     }
 
 }

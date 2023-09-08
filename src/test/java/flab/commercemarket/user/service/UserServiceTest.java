@@ -1,172 +1,167 @@
 package flab.commercemarket.user.service;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.domain.user.UserService;
-import flab.commercemarket.domain.user.mapper.UserMapper;
+import flab.commercemarket.domain.user.repository.UserRepository;
 import flab.commercemarket.domain.user.vo.User;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
-    private UserMapper userMapper;
+    private UserRepository userRepository;
 
     @InjectMocks
     private UserService userService;
 
+    @BeforeEach
+    public void init() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
-    @DisplayName("회원 가입")
-    void register() {
-        //given
-        User user = makeUserFixture(1);
+    @DisplayName("회원가입")
+    public void joinTest() throws Exception {
+        // given
+        User user = User.builder()
+                .username("username1")
+                .address("서울")
+                .phoneNumber("010-0000-0000")
+                .build();
 
-        //when
-        when(userMapper.save(user)).thenReturn(1);
-        user.setId(1L);
-        when(userMapper.findByNameAndUsername(user.getName(), user.getUsername())).thenReturn(Optional.of(user));
-        User savedUser = userService.join(user);
+        when(userRepository.save(any())).thenReturn(user);
 
-        //then
-        assertThat(savedUser).isEqualTo(user);
+        // when
+        User expectedUser = userService.join(user);
 
-        verify(userMapper).save(user);
+        // then
+        assertThat(user.getUsername()).isEqualTo(expectedUser.getUsername());
+        assertThat(user.getAddress()).isEqualTo(expectedUser.getAddress());
+        assertThat(user.getPhoneNumber()).isEqualTo(expectedUser.getPhoneNumber());
     }
 
     @Test()
     @DisplayName("중복 회원가입 시 에러 발생")
     void registerDuplicateUser() {
         //given
-        User user1 = makeUserFixture(1);
-        User user2 = makeUserFixture(1);
+        User user = User.builder()
+                .username("username1")
+                .address("서울")
+                .phoneNumber("010-0000-0000")
+                .build();
 
         //when
-        userService.join(user1);
-        when(userMapper.save(user2)).thenThrow(new IllegalStateException("이미 존재하는 회원입니다."));
+        when(userRepository.isAlreadyExistUser(user.getUsername()))
+                .thenThrow(DuplicateDataException.class);
 
         //then
-        IllegalStateException e = assertThrows(
-                IllegalStateException.class, () -> userService.join(user2)
-        );
-
-        assertThat(e.getMessage()).isEqualTo("이미 존재하는 회원입니다.");
+        assertThrows(DuplicateDataException.class, () -> userService.join(user));
     }
 
     @Test
-    @DisplayName("유저 정보 수정")
-    void update() {
-        //given
-        User joinedUser = userService.join(makeUserFixture(1));
-        Long joinedUserId = joinedUser.getId();
-        User userForUpdate = makeUserFixture(2);
-        userForUpdate.setId(1L);
+    public void getUserByIdTest() throws Exception {
+        // given
+        long userId = 100L;
+        User user = User.builder()
+                .username("username1")
+                .address("서울")
+                .phoneNumber("010-0000-0000")
+                .build();
+        user.setId(userId);
 
-        //when
-        when(userMapper.findById(joinedUserId))
-                .thenReturn(Optional.ofNullable(joinedUser));
-        User updatedUser = userService.updateOne(joinedUserId, userForUpdate);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        //then
-        assertThat(updatedUser).isEqualTo(userForUpdate);
+        // when
+        User foundUser = userService.getUserById(userId);
+
+        // then
+        assertThat(foundUser.getPhoneNumber()).isEqualTo(user.getPhoneNumber());
+    }
+
+    @Test
+    void updateUserTest() {
+        // Given
+        long userId = 1L;
+
+        User userForUpdate = User.builder()
+                .username("newUsername")
+                .password("newPassword")
+                .name("newName")
+                .build();
+
+        User foundUser = User.builder()
+                .username("oldUsername")
+                .password("oldPassword")
+                .name("oldName")
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(foundUser));
+        when(userRepository.save(any(User.class))).thenReturn(foundUser);
+
+        // when
+        User updatedUser = userService.updateOne(userId, userForUpdate);
+
+        assertThat(foundUser.getUsername()).isEqualTo(updatedUser.getUsername());
+        assertThat(foundUser.getPassword()).isEqualTo(updatedUser.getPassword());
+        assertThat(foundUser.getName()).isEqualTo(updatedUser.getName());
     }
 
     @Test
     @DisplayName("존재하지 않는 유저의 id에 업데이트 시도")
     void updateFail() {
         //given
-        User userForUpdate = makeUserFixture(1);
-        Long userId = 1L;
+        long userId = 1L;
+        User user = User.builder()
+                .username("username1")
+                .address("서울")
+                .phoneNumber("010-0000-0000")
+                .build();
+        user.setId(userId);
 
         //when
-        when(userMapper.findById(userId))
-                .thenReturn(Optional.empty());
-        //then
-        DataNotFoundException e = assertThrows(DataNotFoundException.class,
-                () -> userService.updateOne(userId, userForUpdate));
-
-        assertThat(e.getMessage()).isEqualTo("해당 id의 유저가 없음");
-    }
-
-    @Test
-    @DisplayName("유저 찾기")
-    void findUser() {
-        //given
-        User user1 = makeUserFixture(1);
-        User user2 = makeUserFixture(2);
-        User joinedUser = userService.join(user1);
-        userService.join(user2);
-
-        //when
-        when(userMapper.findByNameAndUsername(
-                user1.getName(), user1.getUsername()
-        )).thenReturn(Optional.ofNullable(joinedUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         //then
-        User foundUser = userService.getUser(
-                user1.getName(), user1.getUsername());
-
-        assertThat(foundUser).isEqualTo(joinedUser);
-    }
-
-    @Test
-    @DisplayName("유저 찾기 실패")
-    void findUserFail() {
-        //given
-        User user1 = makeUserFixture(1);
-        User user2 = makeUserFixture(2);
-        User joinedUser = userService.join(user1);
-        userService.join(user2);
-
-        //when
-        when(userMapper.findByNameAndUsername(
-                "nonExistentUser", user1.getUsername()
-        )).thenReturn(Optional.empty());
-
-        //then
-        DataNotFoundException e = assertThrows(DataNotFoundException.class,
-                () -> userService.getUser(
-                        "nonExistentUser", user1.getUsername()));
-
-        assertThat(e.getMessage()).isEqualTo("존재하지 않는 유저입니다.");
+        assertThrows(DataNotFoundException.class, () -> {
+            userService.updateOne(userId, user);
+        });
     }
 
     @Test
     @DisplayName("유저 삭제")
     void delete() {
-        //given
-        User user = makeUserFixture(1);
-        User joinedUser = userService.join(user);
+        // given
+        long userId = 1L;
+        User foundUser = new User();
+        foundUser.setId(userId);
+        foundUser.setUsername("testUser");
+        foundUser.setPassword("testPassword");
+        foundUser.setName("Test User");
+        foundUser.setAddress("Test Address");
+        foundUser.setPhoneNumber("1234567890");
+        foundUser.setEmail("test@example.com");
 
-        //when
-        userService.deleteOne(joinedUser.getId());
+        doNothing().when(userRepository).delete(foundUser);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(foundUser));
 
-        //then 삭제 완료로 검색실패 됨을 검증
-        DataNotFoundException e = assertThrows(DataNotFoundException.class,
-                () -> userService.getUserById(joinedUser.getId()));
+        // when
+        userService.deleteOne(userId);
 
-        assertThat(e.getMessage()).isEqualTo("해당 id의 유저가 없습니다.");
-    }
-
-    User makeUserFixture(int param) {
-        return User.builder()
-                .username("user" + param)
-                .password("pass" + param)
-                .name("김" + param)
-                .email("email" + param)
-                .phoneNumber("phone" + param)
-                .address("address" + param)
-                .build();
+        // then
+        verify(userRepository, times(1)).delete(foundUser);
     }
 }

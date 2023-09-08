@@ -275,7 +275,7 @@ class WishListServiceTest {
     }
 
     private User userFixture(long userId) {
-        return new User(userId, "username", "password", "name", "address", "01012345678", "abc@gmail.com");
+        return new User("username", "password", "name", "address", "01012345678", "abc@gmail.com");
     }
 
     private Product productFixture(long productId) {
