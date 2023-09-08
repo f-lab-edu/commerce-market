@@ -3,6 +3,11 @@ package flab.commercemarket.domain.user.vo;
 import flab.commercemarket.controller.user.dto.UserResponseDto;
 import lombok.*;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -10,8 +15,11 @@ import lombok.*;
 @Builder
 @EqualsAndHashCode
 @ToString
+@Entity(name = "market_user")
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
     private String password;

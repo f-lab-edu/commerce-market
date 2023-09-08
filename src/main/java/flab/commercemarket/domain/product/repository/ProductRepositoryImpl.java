@@ -11,11 +11,9 @@ import static flab.commercemarket.domain.product.vo.QProduct.product;
 
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
-    private final EntityManager em;
     private final JPAQueryFactory queryFactory;
 
     public ProductRepositoryImpl(EntityManager em) {
-        this.em = em;
         this.queryFactory = new JPAQueryFactory(em);
     }
 

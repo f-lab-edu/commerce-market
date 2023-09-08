@@ -6,7 +6,6 @@ import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.domain.payment.PaymentService;
 import flab.commercemarket.domain.payment.mapper.PaymentMapper;
 import flab.commercemarket.domain.payment.vo.Payment;
-import flab.commercemarket.domain.payment.vo.PaymentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -173,7 +172,7 @@ public class PaymentServiceTest {
                 "merchant_uid1",
                 "card",
                 amount,
-                PaymentStatus.SUCCESS,
+                "success",
                 LocalDateTime.now(),
                 null,
                 null,
@@ -199,7 +198,7 @@ public class PaymentServiceTest {
                 "merchant_uid2",
                 "card",
                 amount,
-                PaymentStatus.SUCCESS,
+                "success",
                 LocalDateTime.now(),
                 null,
                 null,
