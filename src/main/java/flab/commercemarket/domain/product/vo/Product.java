@@ -2,6 +2,7 @@ package flab.commercemarket.domain.product.vo;
 
 import flab.commercemarket.controller.product.dto.ProductResponseDto;
 import lombok.*;
+import org.hibernate.annotations.OptimisticLocking;
 
 import javax.persistence.*;
 
@@ -11,6 +12,7 @@ import javax.persistence.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@OptimisticLocking
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +25,9 @@ public class Product {
     private int salesAmount;
     private int likeCount;
     private long sellerId;
+
+    @Version
+    private Long version;
 
     public ProductResponseDto toProductResponseDto() {
         return ProductResponseDto.builder()

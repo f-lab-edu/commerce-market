@@ -99,13 +99,11 @@ public class ProductService {
     @Transactional
     public void updateLikeCount(long productId) {
         log.info("Start increaseLikeCount");
-        Product product = getProduct(productId);
-        // todo 로그인된 유저가 상품을 구매했는지 검증하는 로직이 필요함
+        Product foundProduct = getProduct(productId);
 
-        int likeCount = product.getLikeCount();
+        int likeCount = foundProduct.getLikeCount();
         int newLikeCount = likeCount + 1;
 
-        product.setLikeCount(newLikeCount);
-        productRepository.save(product);
+        foundProduct.setLikeCount(newLikeCount);
     }
 }
