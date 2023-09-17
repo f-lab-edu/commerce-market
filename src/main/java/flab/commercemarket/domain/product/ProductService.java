@@ -48,8 +48,6 @@ public class ProductService {
         foundProduct.setDescription(data.getDescription());
         foundProduct.setStockAmount(data.getStockAmount());
 
-        productRepository.save(foundProduct);
-
         log.info("Update Product. productId = {}", productId);
         return foundProduct;
     }
