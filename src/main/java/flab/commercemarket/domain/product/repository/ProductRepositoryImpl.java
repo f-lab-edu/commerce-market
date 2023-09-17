@@ -2,12 +2,11 @@ package flab.commercemarket.domain.product.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import flab.commercemarket.domain.product.vo.Product;
+import flab.commercemarket.domain.product.vo.QProduct;
 import org.springframework.data.domain.Pageable;
 
 import javax.persistence.EntityManager;
 import java.util.List;
-
-import static flab.commercemarket.domain.product.vo.QProduct.product;
 
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
@@ -20,9 +19,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     @Override
     public List<Product> findByKeyword(String keyword, Pageable pageable) {
         return queryFactory
-                .selectFrom(product)
-                .from(product)
-                .where(product.name.contains(keyword))
+                .selectFrom(QProduct.product)
+                .from(QProduct.product)
+                .where(QProduct.product.name.contains(keyword))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -30,10 +29,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public long countSearchProductByKeyword(String keyword) {
-        Long totalCount = queryFactory
-                .select(product.count())
-                .from(product)
-                .fetchOne();
-        return totalCount != null ? totalCount : 0L;
+        return queryFactory
+                .selectFrom(QProduct.product)
+                .where(QProduct.product.name.contains(keyword))
+                .stream()
+                .count();
     }
 }

@@ -18,18 +18,18 @@ public class WishListController {
     private final WishListService wishListService;
 
     @PostMapping("/{productId}")
-    public void postWishList(@PathVariable long productId, @RequestParam long userId) {
+    public WishListResponseDto postWishList(@PathVariable long productId, @RequestParam long userId) {
         // TODO @RequestParam long userId 제거 -> 로그인 정보에서 userId 가져오도록 refactoring
-        wishListService.registerWishList(userId, productId);
+        WishList wishList = wishListService.registerWishList(userId, productId);
+        return wishList.toWishlistResponseDto();
     }
 
     @GetMapping
     public PageResponseDto<WishListResponseDto> getWishLists(@RequestParam long userId,
                                         @RequestParam int page,
                                         @RequestParam int size) {
-        // TODO @RequestParam long userId 제거 -> 로그인 정보에서 userId 가져오도록 refactoring
         List<WishList> wishLists = wishListService.findWishLists(userId, page, size);
-        int totalElements = wishListService.findWishListCountByUserId(userId);
+        long totalElements = wishListService.countWishListByUserId(userId);
 
         List<WishListResponseDto> wishListResponseList = wishLists.stream()
                 .map(WishList::toWishlistResponseDto)
@@ -45,7 +45,6 @@ public class WishListController {
 
     @DeleteMapping("/{wishListId}")
     public void deleteWishList(@PathVariable long wishListId, @RequestParam long userId) {
-        // TODO @RequestParam long userId 제거 -> 로그인 정보에서 userId 가져오도록 refactoring
         wishListService.deleteWishList(userId, wishListId);
     }
 }
