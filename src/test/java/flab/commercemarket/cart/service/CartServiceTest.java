@@ -57,7 +57,8 @@ class CartServiceTest {
         long productId = 1L;
         long userId = 1L;
         CartDto cartDto = new CartDto();
-        User user = User.builder().id(userId).build();
+        User user = User.builder().build();
+        user.setId(userId);
         Product product = Product.builder().id(productId).build();
         Cart cart = Cart.builder().user(user).product(product).quantity(1).build();
 
@@ -112,7 +113,8 @@ class CartServiceTest {
         long userId = 1L;
         long productId = 1L;
         CartDto data = new CartDto();
-        User user = User.builder().id(userId).build();
+        User user = User.builder().build();
+        user.setId(userId);
         Product product = Product.builder().id(productId).build();
 
         // when
@@ -134,7 +136,8 @@ class CartServiceTest {
         long cartId = 1L;
         long userId = 1L;
         long productId = 2L;
-        User user = User.builder().id(userId).build();
+        User user = User.builder().build();
+        user.setId(userId);
         Product product = Product.builder().id(productId).build();
         Cart existCart = Cart.builder().user(user).product(product).build();
 
@@ -217,7 +220,8 @@ class CartServiceTest {
     @Test
     void calculateTotalPrice() {
         long userId = 1L;
-        User user = User.builder().id(userId).build();
+        User user = User.builder().build();
+        user.setId(userId);
         Product product1 = Product.builder().id(1L).price(10000).build();
         Product product2 = Product.builder().id(2L).price(20000).build();
         Product product3 = Product.builder().id(3L).price(30000).build();
@@ -240,7 +244,8 @@ class CartServiceTest {
     }
 
     private Cart makeCartFixture() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().build();
+        user.setId(1L);
         Product product = Product.builder().id(2L).build();
 
         Cart cart = new Cart(user, product, 1);
