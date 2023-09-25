@@ -3,15 +3,16 @@ package flab.commercemarket.domain.user.vo;
 import flab.commercemarket.controller.user.dto.UserResponseDto;
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity(name = "market_user")
+@Table(indexes = {
+        @Index(name = "idx_username", columnList = "username"),
+        @Index(name = "idx_user_id", columnList = "id")
+})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

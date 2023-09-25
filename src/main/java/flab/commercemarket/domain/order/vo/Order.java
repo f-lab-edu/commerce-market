@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(indexes = @Index(name = "idx_order_id", columnList = "id"))
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

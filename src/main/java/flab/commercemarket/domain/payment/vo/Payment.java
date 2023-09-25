@@ -3,6 +3,8 @@ package flab.commercemarket.domain.payment.vo;
 import flab.commercemarket.controller.payment.dto.PaymentResponseDto;
 import lombok.*;
 
+import javax.persistence.Index;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,6 +12,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(indexes = {
+        @Index(name = "idx_payment_id", columnList = "id")
+})
 public class Payment {
     private Long id;
     private String impUid;

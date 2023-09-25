@@ -14,6 +14,10 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(indexes = {
+        @Index(name = "idx_product_id", columnList = "product_id"),
+        @Index(name = "idx_order_id", columnList = "order_id")
+})
 public class OrderProduct {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
