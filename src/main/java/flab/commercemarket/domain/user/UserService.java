@@ -1,7 +1,6 @@
 package flab.commercemarket.domain.user;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.domain.user.repository.UserRepository;
 import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 @RequiredArgsConstructor
@@ -23,12 +21,7 @@ public class UserService {
     @Transactional
     public User join(User user) {
         log.info("Start join User");
-
-        validateDuplicateUser(user.getUsername());
-        User createdUser = userRepository.save(user);
-
-        log.info("Create user. {}", user.getUsername());
-        return createdUser;
+        return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
@@ -50,20 +43,8 @@ public class UserService {
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
     }
 
-    @Transactional
-    public User updateOne(long userId, User userForUpdate) {
-        log.info("Start update User");
-
-        User foundUser = getUserById(userId);
-
-        foundUser.setUsername(userForUpdate.getUsername());
-        foundUser.setPassword(userForUpdate.getPassword());
-        foundUser.setName(userForUpdate.getName());
-        foundUser.setAddress(userForUpdate.getAddress());
-        foundUser.setPhoneNumber(userForUpdate.getPhoneNumber());
-        foundUser.setEmail(userForUpdate.getEmail());
-
-        return foundUser;
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Transactional
@@ -74,14 +55,4 @@ public class UserService {
         userRepository.delete(foundUser);
         log.info("Delete User. userId = {}", foundUser.getId());
     }
-
-    private void validateDuplicateUser(String username) {
-        log.info("Start validateDuplicate User");
-
-        boolean result = userRepository.isAlreadyExistUser(username);
-        if (result) {
-            throw new DuplicateDataException("이미 존재하는 사용자");
-        }
-    }
-
 }

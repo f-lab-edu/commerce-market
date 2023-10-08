@@ -6,8 +6,9 @@ import lombok.*;
 import javax.persistence.*;
 
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity(name = "market_user")
 @Table(indexes = {
         @Index(name = "idx_username", columnList = "username"),
@@ -17,32 +18,31 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
-    private String password;
+
+    @Column(nullable = false)
     private String name;
-    private String address;
-    private String phoneNumber;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Builder
-    public User(String username, String password, String name, String address, String phoneNumber, String email) {
-        this.username = username;
-        this.password = password;
-        this.name = name;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
+    @Column(nullable = false)
+    private String picture;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    public String getRoleKey() {
+        return role.getKey();
     }
 
     public UserResponseDto toUserResponseDto() {
         return UserResponseDto.builder()
                 .id(id)
-                .username(username)
-                .password(password)
                 .name(name)
-                .address(address)
-                .phoneNumber(phoneNumber)
                 .email(email)
+                .picture(picture)
+                .role(role)
                 .build();
     }
 }
