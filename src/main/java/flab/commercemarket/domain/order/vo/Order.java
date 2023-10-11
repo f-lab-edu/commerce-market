@@ -23,7 +23,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "buyer_id")
     private User user;
 
@@ -37,6 +37,9 @@ public class Order {
 
     private BigDecimal orderPrice;
 
+    @Column(unique = true)
+    private String merchantUid;
+
     public OrderResponseDto toOrderResponseDto() {
         return OrderResponseDto.builder()
                 .id(id)
@@ -45,6 +48,7 @@ public class Order {
                 .requestMessage(requestMessage)
                 .orderedAt(orderedAt)
                 .orderPrice(orderPrice)
+                .merchantUid(merchantUid)
                 .build();
     }
 

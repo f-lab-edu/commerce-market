@@ -4,16 +4,24 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.common.exception.DuplicateDataException;
-import flab.commercemarket.controller.payment.dto.PaymentDataDto;
-import flab.commercemarket.controller.payment.dto.PaymentDataResponseDto;
-import flab.commercemarket.domain.payment.mapper.PaymentMapper;
+import flab.commercemarket.common.exception.PaymentMismatchException;
+import flab.commercemarket.controller.payment.dto.PaymentCancelRequestDto;
+import flab.commercemarket.controller.payment.dto.PaymentResponseDataDto;
+import flab.commercemarket.controller.payment.dto.PaymentResponseDataResponseDto;
+import flab.commercemarket.domain.order.OrderService;
+import flab.commercemarket.domain.order.vo.Order;
+import flab.commercemarket.domain.payment.repository.PaymentRepository;
 import flab.commercemarket.domain.payment.vo.ApiKeyInfo;
 import flab.commercemarket.domain.payment.vo.Payment;
 import flab.commercemarket.domain.payment.vo.PaymentPrepareRequestInfo;
+import flab.commercemarket.domain.payment.vo.PaymentStatus;
+import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,120 +29,136 @@ import org.springframework.web.client.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
-
     @Value("${iamport.host}")
     private String host;
-
+    @Value("${iamport.token}")
+    private String getTokenEndPoint;
+    @Value("${iamport.prepare}")
+    private String prepareEndpoint;
+    @Value("${iamport.cancel}")
+    private String cancelEndpoint;
     @Value("${iamport.imp_key}")
     private String apiKey;
-
     @Value("${iamport.imp_secret}")
     private String apiSecret;
 
-    private final PaymentMapper paymentMapper;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final OrderService orderService;
+    private final UserService userService;
+    private final PaymentRepository paymentRepository;
 
+    // 주문 발생시 비동기 처리
     @Transactional
-    public void processPayment(String merchantUid, BigDecimal amount) { // 사전검증
-        String apiUrl = urlMaker(host, "/payments/prepare");
-        log.info("Start persistRequestData. apiUrl: {}", apiUrl);
+    public void preparePayment(long orderId) { // 사전검증
 
-        isDuplicatedMerchantUid(merchantUid);
-        checkMerchantUidNotNull(merchantUid);
+        Order foundOrder = orderService.getOrder(orderId);
+        log.info("merchantUid: {}", foundOrder.getMerchantUid());
+        log.info("amount: {}", foundOrder.getOrderPrice());
 
-        callPrepareApi(merchantUid, amount, apiUrl);
-        savePreValidationDataToDB(merchantUid, amount);
+        String merchantUid = foundOrder.getMerchantUid();
+        BigDecimal amount = foundOrder.getOrderPrice();
 
-        log.info("Payment pre-validation successful. merchantUid: {}", merchantUid);
+        HttpStatus httpStatus = callPrepareApi(foundOrder.getMerchantUid(), foundOrder.getOrderPrice());
+
+        if (httpStatus.is2xxSuccessful()) {
+            savePreValidationDataToDB(merchantUid, amount);
+        }
     }
 
+    // todo fetchJoin 사용하도록 변경
     @Transactional
-    public void completePaymentVerification(String impUid, String merchantUid) { // 사후검증
-        log.info("Start completePaymentVerification. impUid: {}, merchantUid: {}", impUid, merchantUid);
+    public Payment processPayment(String merchantUid, String impUid, String status) {
+        PaymentResponseDataDto paymentResponse = getPaymentFromPgServer(impUid);
+        log.info("paymentResponse: {}", paymentResponse);
 
-        PaymentDataDto paymentDataDto = fetchPaymentFromIamportServer(impUid); // 조회한 결제정보
+        Payment payment = paymentBuilder(merchantUid, status, paymentResponse);
 
-        // DB에서 결제되어야 하는 금액 조회
-        Payment foundPayment = getPaymentByMerchantUid(merchantUid);
-        BigDecimal foundAmount = foundPayment.getAmount();
-        log.info("foundAmount: {}", foundAmount);
+        Order order = orderService.getOrder(payment.getOrderId()); // 1차 캐시 활용
 
-        // 결제 검증
-        if (paymentDataDto.getAmount() != foundAmount.intValue()) {
-            log.warn("결제금액 불일치. 위/변조된 결제. 결제 된 금액: {}, 결제 되어야하는 금액: {}", paymentDataDto.getAmount(), foundAmount.intValue());
-            // todo 결제 취소 연동
+        int paidPrice = paymentResponse.getAmount().intValue();
+        int orderPrice = order.getOrderPrice().intValue();
+        log.info("주문 예정 금액: {}", orderPrice);
+        log.info("결제된 금액: {}", paidPrice);
 
-            paymentMapper.updateCancelPayment(foundPayment.getId(), paymentDataDto.toCanceledPayment());
-            return;
+        if (paidPrice != orderPrice) {
+            cancelPaymentFromPgServer(impUid);
+            throw new PaymentMismatchException("주문금액과 결제금액이 일치하지 않습니다.");
         }
 
-        paymentMapper.updateCompletePayment(foundPayment.getId(), paymentDataDto.toCompletePayment());
+        return paymentRepository.save(payment);
     }
 
     public Payment getPayment(long paymentId) {
         log.info("Start getPayment.");
 
-        Optional<Payment> optionalPayment = paymentMapper.findById(paymentId);
+        Optional<Payment> optionalPayment = paymentRepository.findById(paymentId);
         return optionalPayment.orElseThrow(() -> {
             log.info("paymentId = {}", paymentId);
             return new DataNotFoundException("조회한 결제 정보가 없음");
         });
     }
 
-    public List<Payment> getPayments(String username, int page, int size) {
-        log.info("Start getPayments. username: {}", username);
-
-        int limit = size;
-        int offset = (page - 1) * size;
-
-        return paymentMapper.findByUsername(username, offset, limit);
+    public List<Payment> getPayments(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return paymentRepository.findPayments(pageable);
     }
 
-    public int countPaymentByUsername(String username) {
-        log.info("Start countPaymentByUsername. username: {}", username);
-
-        return paymentMapper.countByBuyerName(username);
+    public long countPayments() {
+        log.info("count payments.");
+        return paymentRepository.countPayments();
     }
 
-    private Payment getPaymentByMerchantUid(String merchantUid) {
-        log.info("Start getPaymentByMerchantUid. merchantUid: {}", merchantUid);
+    private void savePreValidationDataToDB(String merchantUid, BigDecimal amount) {
+        log.info("savePreValidationDataToDB()");
+        Payment preparePayment = Payment.builder()
+                .status(PaymentStatus.READY)
+                .merchantUid(merchantUid)
+                .amount(amount)
+                .build();
 
-        Optional<Payment> optionalPayment = paymentMapper.findByMerchantUid(merchantUid);
-        return optionalPayment.orElseThrow(() -> {
-            log.info("merchantUid = {}", merchantUid);
-            return new DataNotFoundException("조회한 결제 정보가 없음");
-        });
+        paymentRepository.save(preparePayment);
     }
 
-    private void isDuplicatedMerchantUid(String merchantUid) {
-        log.info("Start isDuplicatedMerchantUid.");
+    private Payment paymentBuilder(String merchantUid, String status, PaymentResponseDataDto paymentResponse) {
+        Order foundOrder = orderService.getOrderByMerchantUid(merchantUid);
+        User foundUser = userService.getUserById(foundOrder.getUserId());
 
-        boolean result = paymentMapper.isAlreadyExistentMerchantUid(merchantUid);
-        if (result) {
-            log.warn("merchantUid 중복. merchantUid: {}", merchantUid);
-            throw new DuplicateDataException("중복결제 시도");
-        }
-    }
+        PaymentStatus paymentStatus = convertStatusToPaymentStatus(status);
 
-    private void checkMerchantUidNotNull(String merchantUid) {
-        if (merchantUid == null) {
-            log.info("merchantUid is null");
-            throw new IllegalArgumentException();
-        }
+        LocalDateTime[] times = getLocalDateTimes(paymentResponse);
+        LocalDateTime paidAt = times[0];
+        LocalDateTime cancelledAt = times[1];
+        LocalDateTime failedAt = times[2];
+
+        return Payment.builder()
+                .receiptUrl(paymentResponse.getReceiptUrl())
+                .amount(paymentResponse.getAmount())
+                .impUid(paymentResponse.getImpUid())
+                .merchantUid(paymentResponse.getMerchantUid())
+                .pgProvider(paymentResponse.getPgProvider())
+                .payMethod(paymentResponse.getPayMethod())
+                .status(paymentStatus)
+                .order(foundOrder)
+                .user(foundUser)
+                .paidAt(paidAt)
+                .cancelledAt(cancelledAt)
+                .failedAt(failedAt)
+                .build();
     }
 
     private String getToken() {
-        String apiUrl = urlMaker(host, "/users/getToken");
-        log.info("Start getToken. url: {}", apiUrl);
+        log.info("Start getToken. url: {}", getTokenEndPoint);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -150,8 +174,8 @@ public class PaymentService {
 
             HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            log.info("Call Get Token API. url: {}", apiUrl);
-            ResponseEntity<String> responseEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, requestEntity, String.class);
+            log.info("Call Get Token API. url: {}", getTokenEndPoint);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(getTokenEndPoint, HttpMethod.POST, requestEntity, String.class);
 
             String responseBody = responseEntity.getBody();
             log.info("Complete Get Token. ResponseBody: {}", responseBody);
@@ -164,7 +188,9 @@ public class PaymentService {
         }
     }
 
-    private void callPrepareApi(String merchantUid, BigDecimal amount, String apiUrl) {
+    private HttpStatus callPrepareApi(String merchantUid, BigDecimal amount) {
+        log.info("Start persistRequestData. apiUrl: {}", prepareEndpoint);
+
         String accessToken = getToken();
         log.info("Access Token: {}", accessToken);
 
@@ -172,91 +198,118 @@ public class PaymentService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + accessToken);
 
-        PaymentPrepareRequestInfo prepareRequestInfo = PaymentPrepareRequestInfo.builder().merchantUid(merchantUid).amount(amount).build();
-
-        String requestBody = null;
-        try {
-            requestBody = objectMapper.writeValueAsString(prepareRequestInfo);
-            log.info("Complete serialization.");
-        } catch (JsonProcessingException e) {
-            throw new RestClientException("Fail to json parsing", e);
-        }
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                apiUrl,
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody, headers),
-                String.class);
-
-        handleFailedResponse(response);
-    }
-
-    private void handleFailedResponse(ResponseEntity<String> response) {
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            log.error("Payment request failed with status code: {}", response.getStatusCodeValue());
-            throw new RuntimeException("Payment request failed");
-        }
-
-        String responseBody = response.getBody();
-        JsonNode jsonNode;
-        try {
-            jsonNode = objectMapper.readTree(responseBody);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse JSON response: {}", e.getMessage());
-            throw new RuntimeException("Failed to parse JSON response", e);
-        }
-
-        JsonNode merchantUidNode = jsonNode.path("response").path("merchant_uid");
-        if (merchantUidNode.isNull()) {
-            log.error("merchant_uid is null in the payment response");
-            throw new RuntimeException("Payment response contains null merchant_uid");
-        }
-    }
-
-    private void savePreValidationDataToDB(String merchantUid, BigDecimal amount) {
-        Payment preparePayment = Payment.builder()
-                .status("prepare")
+        PaymentPrepareRequestInfo prepareRequestInfo = PaymentPrepareRequestInfo.builder()
                 .merchantUid(merchantUid)
                 .amount(amount)
                 .build();
 
-        paymentMapper.insertPrepareRequestData(preparePayment);
-
-        log.info("Save PrepareRequestData. merchantUid: {}", merchantUid);
-    }
-
-    private PaymentDataDto fetchPaymentFromIamportServer(String impUid) {
+        String requestBody = null;
         try {
-            PaymentDataResponseDto responseBody = executeGetPaymentApiCall(impUid);
-
-            log.info("response: {}", responseBody);
-
-            return responseBody.getResponse();
-        } catch (RestClientException | NullPointerException e) {
-            log.error("Exception occurred: {}", e.getMessage());
-            throw new IllegalStateException("Failed to retrieve payment data.", e);
+            requestBody = objectMapper.writeValueAsString(prepareRequestInfo);
+        } catch (JsonProcessingException e) {
+            throw new RestClientException("Fail to json parsing", e);
         }
+        log.info("requestBody: {}", requestBody);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                prepareEndpoint,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                String.class);
+        log.info("response: {}", response);
+
+        return response.getStatusCode();
     }
 
-    private PaymentDataResponseDto executeGetPaymentApiCall(String impUid) {
-        String apiUrl = urlMaker(host, "payments/" + impUid);
+    // PG사에서 결제내역 단건조회
+    private PaymentResponseDataDto getPaymentFromPgServer(String impUid) {
+        String apiUrl = urlBuilder(host, "payments/" + impUid);
 
         String accessToken = getToken();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", accessToken);
 
         log.info("Start API call. apiUrl: {}", apiUrl);
-        ResponseEntity<PaymentDataResponseDto> paymentDataResponse = restTemplate.exchange(
+        ResponseEntity<PaymentResponseDataResponseDto> responseEntity = restTemplate.exchange(
                 apiUrl,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                PaymentDataResponseDto.class);
-        log.info("Success API call");
+                PaymentResponseDataResponseDto.class);
+        log.info("Success API call. response: {}", responseEntity);
 
-        return Objects.requireNonNull(paymentDataResponse.getBody(), "paymentDataResponse is null");
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            log.warn("API 호출에 실패했습니다. 상태 코드: {}", responseEntity.getStatusCodeValue());
+            throw new RuntimeException();
+        }
+
+        PaymentResponseDataResponseDto responseBody = responseEntity.getBody();
+        if (responseBody == null) {
+            log.warn("API Response 값이 Null 입니다.");
+            throw new RuntimeException();
+        }
+
+        return responseBody.getResponse();
     }
 
-    private String urlMaker(String host, String path) {
+    public void cancelPaymentFromPgServer(String impUid) {
+        log.info("주문 취소 요청. endpoint: {}", cancelEndpoint);
+
+        String accessToken = getToken();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", accessToken);
+
+        PaymentCancelRequestDto requestData = PaymentCancelRequestDto.builder().impUid(impUid).build();
+        String requestBody;
+        try {
+            requestBody = objectMapper.writeValueAsString(requestData);
+        } catch (JsonProcessingException e) {
+            throw new RestClientException("Fail to json parsing", e);
+        }
+
+        ResponseEntity<PaymentResponseDataDto> responseEntity = restTemplate.exchange(
+                cancelEndpoint,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                PaymentResponseDataDto.class
+        );
+
+        log.info("responseEntity: {}", responseEntity);
+    }
+
+    private PaymentStatus convertStatusToPaymentStatus(String status) {
+        switch (status) {
+            case "failed":
+                return PaymentStatus.FAILED;
+            case "canceled":
+                return PaymentStatus.CANCELED;
+            case "ready":
+                return PaymentStatus.READY;
+            case "paid":
+                return PaymentStatus.PAID;
+            default:
+                log.warn("payment status 변환 실패. status: {}", status);
+                throw new IllegalArgumentException();
+        }
+    }
+
+    private LocalDateTime[] getLocalDateTimes(PaymentResponseDataDto paymentResponse) {
+        long[] timestamps = {
+                paymentResponse.getPaidAt(),
+                paymentResponse.getCancelledAt(),
+                paymentResponse.getFailedAt()
+        };
+
+        LocalDateTime[] times = new LocalDateTime[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            if (timestamps[i] != 0) {
+                Instant instant = Instant.ofEpochSecond(timestamps[i]);
+                times[i] = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+            }
+        }
+        return times;
+    }
+
+    private String urlBuilder(String host, String path) {
         return UriComponentsBuilder.newInstance()
                 .scheme("https")
                 .host(host)

@@ -42,16 +42,21 @@ public class OrderService {
         User buyer = userService.getUserById(orderRequestDto.getBuyerId());
         List<OrderProduct> orderProductList = createOrderProductList(orderRequestDto);
 
+        LocalDateTime orderedAt = LocalDateTime.now();
+        String merchantUid = merchantUidBuilder(loginUserId, orderedAt);
+
         BigDecimal orderPrice = orderProductList.stream()
                 .map(OrderProduct::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        log.info("주문 금액: {}", orderPrice);
 
         Order order = Order.builder()
                 .user(buyer)
                 .orderProduct(orderProductList)
                 .requestMessage(orderRequestDto.getRequestMessage())
-                .orderedAt(LocalDateTime.now())
+                .orderedAt(orderedAt)
                 .orderPrice(orderPrice)
+                .merchantUid(merchantUid)
                 .build();
 
         return orderRepository.save(order);
@@ -66,6 +71,12 @@ public class OrderService {
             log.info("orderId: {}", orderId);
             return new DataNotFoundException("조회한 주문정보가 없음");
         });
+    }
+
+    public Order getOrderByMerchantUid(String merchantUid) {
+        log.info("getOrderByMerchantUid(): merchantUid: {}", merchantUid);
+        return orderRepository.findByMerchantUid(merchantUid)
+                .orElseThrow(() -> new DataNotFoundException("조회한 주문정보가 없음"));
     }
 
     @Transactional
@@ -116,5 +127,11 @@ public class OrderService {
         log.info("Parse String to LocalDateTime. startDateTime: {}, endDateTime: {}", startDateTime, endDateTime);
 
         return orderRepository.countOrderBetweenDate(startDateTime, endDateTime);
+    }
+
+    // PG 사에서 사용하는 주문 고유 번호. 유니크한 값이어야함
+    private String merchantUidBuilder(long loginUserId, LocalDateTime orderedAt) {
+        int mills = orderedAt.getNano();
+        return String.format("merch_%03d_%d", mills, loginUserId);
     }
 }
