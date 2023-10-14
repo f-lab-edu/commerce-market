@@ -13,6 +13,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @OptimisticLocking
+@Table(indexes = @Index(name = "idx_product_name", columnList = "name"))
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -15,6 +15,10 @@ import javax.persistence.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(indexes = {
+        @Index(name = "idx_product_id", columnList = "product_id"),
+        @Index(name = "idx_user_id", columnList = "user_id")
+})
 public class WishList {
 
     @Id

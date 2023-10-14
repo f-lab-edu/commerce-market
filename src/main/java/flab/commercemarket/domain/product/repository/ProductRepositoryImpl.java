@@ -20,8 +20,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     public List<Product> findByKeyword(String keyword, Pageable pageable) {
         return queryFactory
                 .selectFrom(QProduct.product)
-                .from(QProduct.product)
-                .where(QProduct.product.name.contains(keyword))
+                .where(QProduct.product.name.like(keyword + "%"))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -31,7 +30,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     public long countSearchProductByKeyword(String keyword) {
         return queryFactory
                 .selectFrom(QProduct.product)
-                .where(QProduct.product.name.contains(keyword))
+                .where(QProduct.product.name.like(keyword + "%"))
                 .stream()
                 .count();
     }
