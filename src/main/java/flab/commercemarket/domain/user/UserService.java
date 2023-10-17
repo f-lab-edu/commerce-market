@@ -18,12 +18,6 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    @Transactional
-    public User join(User user) {
-        log.info("Start join User");
-        return userRepository.save(user);
-    }
-
     @Transactional(readOnly = true)
     public Page<User> findUsers(int page, int size) {
         log.info("Start findUsers");
@@ -41,10 +35,6 @@ public class UserService {
 
         return userRepository.findById(id)
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
-    }
-
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Transactional
