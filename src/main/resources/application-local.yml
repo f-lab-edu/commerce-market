@@ -11,6 +11,10 @@ spring:
       password: ENC(GOoxTZARqOXfIVa+NWeuSw==)
       driver-class-name: ENC(Bhpswp3jpRS+YqAIXt+8U94M6BqOWpdQP1osszD1FqUBG6SxUMgtDw==)
 
+  redis:
+    host: localhost
+    port: 6380 # 로컬 6380 포트와 docker 6379 포트 연결 (캐시적용 고려)
+
   jpa:
     hibernate:
       ddl-auto: update

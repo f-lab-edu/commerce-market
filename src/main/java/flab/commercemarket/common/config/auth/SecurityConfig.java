@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .authorizeRequests(a -> a
                         .antMatchers("/").permitAll()
                         .antMatchers("/login").permitAll()
-//                        .antMatchers(HttpMethod.POST, "/products/**").hasRole("USER")
+                        .antMatchers(HttpMethod.POST, "/products/**").hasRole("USER")
                         .antMatchers(HttpMethod.PATCH, "/products").hasRole("USER")
                         .antMatchers(HttpMethod.DELETE, "/products/**").hasRole("USER")
                         .antMatchers(HttpMethod.GET, "/products/**").permitAll()
