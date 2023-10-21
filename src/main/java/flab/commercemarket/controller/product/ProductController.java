@@ -7,6 +7,7 @@ import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto postProduct(@RequestBody ProductDto productDto) {
         Product product = productDto.toProduct();
         Product createdProduct = productService.registerProduct(product);
@@ -28,6 +30,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{productId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto patchProduct(@PathVariable("productId") long productId,
                                            @RequestBody @Validated ProductDto productDto) {
         Product product = productDto.toProduct();
@@ -76,6 +79,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
     public void deleteProduct(@PathVariable("productId") long productId, @RequestParam long loginUserId) {
         productService.deleteProduct(productId, loginUserId);
     }

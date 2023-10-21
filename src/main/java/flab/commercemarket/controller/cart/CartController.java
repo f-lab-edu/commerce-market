@@ -6,6 +6,7 @@ import flab.commercemarket.controller.cart.dto.CartResponseDto;
 import flab.commercemarket.domain.cart.CartService;
 import flab.commercemarket.domain.cart.vo.Cart;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/carts")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
 public class CartController {
 
     private final CartService cartService;

@@ -2,6 +2,7 @@ package flab.commercemarket.domain.user;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.domain.user.repository.UserRepository;
+import flab.commercemarket.domain.user.vo.Role;
 import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,5 +45,11 @@ public class UserService {
         User foundUser = getUserById(id);
         userRepository.delete(foundUser);
         log.info("Delete User. userId = {}", foundUser.getId());
+    }
+
+    @Transactional
+    public void changeUserRole(long userId) {
+        User foundUser = getUserById(userId);
+        foundUser.setRole(foundUser.getRole() == Role.USER ? Role.ADMIN : Role.USER);
     }
 }
