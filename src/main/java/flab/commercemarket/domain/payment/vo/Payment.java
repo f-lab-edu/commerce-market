@@ -1,34 +1,44 @@
 package flab.commercemarket.domain.payment.vo;
 
 import flab.commercemarket.controller.payment.dto.PaymentResponseDto;
+import flab.commercemarket.domain.order.vo.Order;
+import flab.commercemarket.domain.user.vo.User;
 import lombok.*;
 
-import javax.persistence.Index;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(indexes = {
-        @Index(name = "idx_payment_id", columnList = "id")
-})
 public class Payment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String impUid;
     private String merchantUid;
     private String payMethod;
     private BigDecimal amount;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
     private LocalDateTime paidAt;
     private LocalDateTime failedAt;
     private LocalDateTime cancelledAt;
     private String receiptUrl;
     private String pgProvider;
-    private String buyerName;
-    private boolean success;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    private Order order;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    private User user;
+
+    public long getOrderId() {
+        return order.getId();
+    }
 
     public PaymentResponseDto toPaymentResponseDto() {
         return PaymentResponseDto.builder()
@@ -43,8 +53,8 @@ public class Payment {
                 .cancelledAt(cancelledAt)
                 .receiptUrl(receiptUrl)
                 .pgProvider(pgProvider)
-                .buyerName(buyerName)
-                .success(success)
+                .orderId(order.getId())
+                .userId(user.getId())
                 .build();
     }
 }

@@ -1,4 +1,4 @@
-package flab.commercemarket.domain.payment.config;
+package flab.commercemarket.common.config.resttemplate;
 
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -11,10 +11,10 @@ import java.time.Duration;
 public class RestTemplateConfig {
 
     @Bean(name = "paymentRestTemplate")
-    public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+    public RestTemplate paymentRestTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(5))
+                .setConnectTimeout(Duration.ofSeconds(3))
+                .setReadTimeout(Duration.ofSeconds(30))
                 .build();
     }
 }

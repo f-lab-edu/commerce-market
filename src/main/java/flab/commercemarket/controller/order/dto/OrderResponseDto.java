@@ -21,4 +21,5 @@ public class OrderResponseDto {
     private String requestMessage;
     private LocalDateTime orderedAt;
     private BigDecimal orderPrice;
+    private String merchantUid;
 }

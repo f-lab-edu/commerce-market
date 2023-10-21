@@ -1,5 +1,6 @@
 package flab.commercemarket.controller.payment.dto;
 
+import flab.commercemarket.domain.payment.vo.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,12 +19,12 @@ public class PaymentResponseDto {
     private String merchantUid;
     private String payMethod;
     private BigDecimal amount;
-    private String status;
+    private PaymentStatus status;
     private LocalDateTime paidAt;
     private LocalDateTime failedAt;
     private LocalDateTime cancelledAt;
     private String receiptUrl;
     private String pgProvider;
-    private String buyerName;
-    private boolean success;
+    private long orderId;
+    private long userId;
 }

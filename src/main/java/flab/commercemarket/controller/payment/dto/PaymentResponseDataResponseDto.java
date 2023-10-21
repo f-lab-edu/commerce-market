@@ -9,8 +9,8 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PaymentDataResponseDto {
+public class PaymentResponseDataResponseDto extends PaymentResponseDataDto {
     private int code;
     private String message;
-    private PaymentDataDto response;
+    private PaymentResponseDataDto response;
 }

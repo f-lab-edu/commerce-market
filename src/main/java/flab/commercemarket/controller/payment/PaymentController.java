@@ -23,12 +23,7 @@ public class PaymentController {
 
     @PostMapping("/prepare")
     public void preparePayment(@RequestBody PaymentPreVerificationDto request) {
-        paymentService.processPayment(request.getMerchantUid(), request.getAmount());
-    }
-
-    @PostMapping("/complete")
-    public void completePayment(@RequestBody PaymentPostVerificationDto request) {
-        paymentService.completePaymentVerification(request.getImpUid(), request.getMerchantUid());
+        paymentService.preparePayment(request.getOrderId());
     }
 
     @GetMapping("/{paymentId}")
@@ -38,13 +33,14 @@ public class PaymentController {
     }
 
     @GetMapping
-    public PageResponseDto<PaymentResponseDto> getPayments(@RequestParam String username, @RequestParam int page, @RequestParam int size) {
-        List<Payment> payments = paymentService.getPayments(username, page, size);
+    public PageResponseDto<PaymentResponseDto> getPayments(@RequestParam int page, @RequestParam int size) {
+        List<Payment> payments = paymentService.getPayments(page, size);
 
-        int totalElements = paymentService.countPaymentByUsername(username);
         List<PaymentResponseDto> paymentResponseDto = payments.stream()
                 .map(Payment::toPaymentResponseDto)
                 .collect(Collectors.toList());
+
+        long totalElements = paymentService.countPayments();
 
         return PageResponseDto.<PaymentResponseDto>builder()
                 .page(page)

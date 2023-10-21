@@ -13,5 +13,7 @@ import java.math.BigDecimal;
 public class PaymentPrepareRequestInfo {
     @JsonProperty("merchant_uid")
     private String merchantUid;
+
+    @JsonProperty("amount")
     private BigDecimal amount;
 }
