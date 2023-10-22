@@ -1,8 +1,8 @@
 package flab.commercemarket.domain.user;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.domain.user.repository.UserRepository;
+import flab.commercemarket.domain.user.vo.Role;
 import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,24 +12,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
-
-    @Transactional
-    public User join(User user) {
-        log.info("Start join User");
-
-        validateDuplicateUser(user.getUsername());
-        User createdUser = userRepository.save(user);
-
-        log.info("Create user. {}", user.getUsername());
-        return createdUser;
-    }
 
     @Transactional(readOnly = true)
     public Page<User> findUsers(int page, int size) {
@@ -51,22 +39,6 @@ public class UserService {
     }
 
     @Transactional
-    public User updateOne(long userId, User userForUpdate) {
-        log.info("Start update User");
-
-        User foundUser = getUserById(userId);
-
-        foundUser.setUsername(userForUpdate.getUsername());
-        foundUser.setPassword(userForUpdate.getPassword());
-        foundUser.setName(userForUpdate.getName());
-        foundUser.setAddress(userForUpdate.getAddress());
-        foundUser.setPhoneNumber(userForUpdate.getPhoneNumber());
-        foundUser.setEmail(userForUpdate.getEmail());
-
-        return foundUser;
-    }
-
-    @Transactional
     public void deleteOne(long id) {
         log.info("Start delete User");
 
@@ -75,13 +47,9 @@ public class UserService {
         log.info("Delete User. userId = {}", foundUser.getId());
     }
 
-    private void validateDuplicateUser(String username) {
-        log.info("Start validateDuplicate User");
-
-        boolean result = userRepository.isAlreadyExistUser(username);
-        if (result) {
-            throw new DuplicateDataException("이미 존재하는 사용자");
-        }
+    @Transactional
+    public void changeUserRole(long userId) {
+        User foundUser = getUserById(userId);
+        foundUser.setRole(foundUser.getRole() == Role.USER ? Role.ADMIN : Role.USER);
     }
-
 }

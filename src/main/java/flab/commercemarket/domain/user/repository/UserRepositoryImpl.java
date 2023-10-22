@@ -18,7 +18,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         Integer fetchOne = queryFactory
                 .selectOne()
                 .from(QUser.user)
-                .where(QUser.user.username.eq(username))
+                .where(QUser.user.name.eq(username))
                 .fetchFirst();
 
         return fetchOne != null;

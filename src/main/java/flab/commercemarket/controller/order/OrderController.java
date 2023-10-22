@@ -6,6 +6,7 @@ import flab.commercemarket.controller.order.dto.OrderResponseDto;
 import flab.commercemarket.domain.order.OrderService;
 import flab.commercemarket.domain.order.vo.Order;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/orders")
+@PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
 public class OrderController {
     private final OrderService orderService;
 

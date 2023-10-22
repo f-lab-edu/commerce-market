@@ -1,4 +1,4 @@
-package flab.commercemarket.common.config;
+package flab.commercemarket.common.config.jasypt;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jasypt.encryption.StringEncryptor;

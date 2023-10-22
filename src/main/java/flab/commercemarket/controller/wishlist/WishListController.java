@@ -5,6 +5,7 @@ import flab.commercemarket.controller.wishlist.dto.WishListResponseDto;
 import flab.commercemarket.domain.wishlist.WishListService;
 import flab.commercemarket.domain.wishlist.vo.WishList;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/wishes")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
 public class WishListController {
 
     private final WishListService wishListService;
