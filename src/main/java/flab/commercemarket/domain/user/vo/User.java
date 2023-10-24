@@ -1,9 +1,11 @@
 package flab.commercemarket.domain.user.vo;
 
 import flab.commercemarket.controller.user.dto.UserResponseDto;
+import flab.commercemarket.domain.product.vo.Product;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Getter
 @Builder
@@ -28,10 +30,13 @@ public class User {
     @Column(nullable = false)
     private String picture;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     @Setter
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "seller")
+    private List<Product> productList;
 
     public String getRoleKey() {
         return role.getKey();

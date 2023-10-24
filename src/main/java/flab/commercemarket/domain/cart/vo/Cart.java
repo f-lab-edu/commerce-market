@@ -8,13 +8,15 @@ import lombok.*;
 import javax.persistence.*;
 
 @Getter
-@Setter
+@Builder
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(indexes = {
         @Index(name = "idx_user_id", columnList = "user_id"),
         @Index(name = "idx_product_id", columnList = "product_id")
 })
+@ToString
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,14 +30,8 @@ public class Cart {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @Setter
     private int quantity;
-
-    @Builder
-    public Cart(User user, Product product, int quantity) {
-        this.user = user;
-        this.product = product;
-        this.quantity = quantity;
-    }
 
     public CartResponseDto toCartResponseDto() {
         return CartResponseDto.builder()

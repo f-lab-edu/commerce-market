@@ -1,9 +1,11 @@
 package flab.commercemarket.domain.product;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.common.helper.AuthorizationHelper;
+import flab.commercemarket.controller.product.dto.ProductDto;
 import flab.commercemarket.domain.product.repository.ProductRepository;
 import flab.commercemarket.domain.product.vo.Product;
+import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,12 +23,22 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final AuthorizationHelper authorizationHelper;
     private final ProductRepository productRepository;
+    private final UserService userService;
 
     @Transactional
-    public Product registerProduct(Product product) {
+    public Product registerProduct(ProductDto productDto) {
         log.info("Start registerProduct");
+
+        User foundUser = userService.getUserById(productDto.getSellerId());
+
+        Product product = Product.builder()
+                .name(productDto.getName())
+                .price(productDto.getPrice())
+                .imageUrl(productDto.getImageUrl())
+                .description(productDto.getDescription())
+                .seller(foundUser)
+                .build();
 
         productRepository.save(product);
 
@@ -35,25 +47,22 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(long productId, Product data) {
+    public Product updateProduct(long productId, ProductDto productDto) {
         log.info("Start updateProduct");
 
-        Product foundProduct = getProduct(productId);
+        Product foundProduct = getProductById(productId);
 
-        authorizationHelper.checkUserAuthorization(foundProduct.getSellerId(), data.getSellerId());
-
-        foundProduct.setName(data.getName());
-        foundProduct.setPrice(data.getPrice());
-        foundProduct.setImageUrl(data.getImageUrl());
-        foundProduct.setDescription(data.getDescription());
-        foundProduct.setStockAmount(data.getStockAmount());
+        foundProduct.setName(productDto.getName());
+        foundProduct.setPrice(productDto.getPrice());
+        foundProduct.setImageUrl(productDto.getImageUrl());
+        foundProduct.setDescription(productDto.getDescription());
 
         log.info("Update Product. productId = {}", productId);
         return foundProduct;
     }
 
     @Transactional(readOnly = true)
-    public Product getProduct(long productId) {
+    public Product getProductById(long productId) {
         log.info("Start get ProductId: {}", productId);
 
         Optional<Product> optionalProduct = productRepository.findById(productId);
@@ -88,10 +97,9 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(long productId, long loginUserId) {
-        Product foundProduct = getProduct(productId);
+    public void deleteProduct(long productId) {
+        Product foundProduct = getProductById(productId);
 
-        authorizationHelper.checkUserAuthorization(foundProduct.getSellerId(), loginUserId);
         productRepository.delete(foundProduct);
         log.info("Delete Product. ProductId = {}", productId);
     }
@@ -99,7 +107,7 @@ public class ProductService {
     @Transactional
     public void updateLikeCount(long productId) {
         log.info("Start increaseLikeCount");
-        Product foundProduct = getProduct(productId);
+        Product foundProduct = getProductById(productId);
 
         int likeCount = foundProduct.getLikeCount();
         int newLikeCount = likeCount + 1;

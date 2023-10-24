@@ -2,7 +2,8 @@ package flab.commercemarket.domain.wishlist;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
-import flab.commercemarket.common.helper.AuthorizationHelper;
+import flab.commercemarket.common.exception.ForbiddenException;
+import flab.commercemarket.domain.cart.vo.Cart;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import flab.commercemarket.domain.user.UserService;
@@ -27,14 +28,13 @@ public class WishListService {
     private final WishListRepository wishListRepository;
     private final UserService userService;
     private final ProductService productService;
-    private final AuthorizationHelper authorizationHelper;
 
     @Transactional
     public WishList registerWishList(long userId, long productId) {
         log.info("Start registerWishList");
 
         User foundUser = userService.getUserById(userId);
-        Product foundProduct = productService.getProduct(productId);
+        Product foundProduct = productService.getProductById(productId);
         verifyDuplicatedWishList(userId, productId);
 
         WishList wishList = WishList.builder()
@@ -69,8 +69,7 @@ public class WishListService {
         log.info("Start Delete WishList");
 
         WishList foundWishList = getWishList(wishListId);
-
-        authorizationHelper.checkUserAuthorization(foundWishList.getUserId(), userId);
+        checkAuthorization(userId, foundWishList);
 
         wishListRepository.delete(foundWishList);
         log.info("Delete WishList = {}", wishListId);
@@ -94,6 +93,12 @@ public class WishListService {
         if (isDuplicate) {
             log.info("userId = {}, productId = {}", userId, productId);
             throw new DuplicateDataException("이미 위시리스트에 존재하는 상품입니다.");
+        }
+    }
+
+    private void checkAuthorization(long userId, WishList foundWishList) {
+        if (userId != foundWishList.getUserId()) {
+            throw new ForbiddenException("권한 정보 일치하지 않음");
         }
     }
 }

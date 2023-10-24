@@ -1,6 +1,7 @@
 package flab.commercemarket.domain.product.vo;
 
 import flab.commercemarket.controller.product.dto.ProductResponseDto;
+import flab.commercemarket.domain.user.vo.User;
 import lombok.*;
 import org.hibernate.annotations.OptimisticLocking;
 
@@ -23,9 +24,10 @@ public class Product {
     private String imageUrl;
     private String description;
     private int stockAmount;
-    private int salesAmount;
     private int likeCount;
-    private long sellerId;
+
+    @ManyToOne
+    private User seller;
 
     @Version
     private Long version;
@@ -37,10 +39,8 @@ public class Product {
                 .price(price)
                 .imageUrl(imageUrl)
                 .description(description)
-                .stockAmount(stockAmount)
-                .salesAmount(salesAmount)
                 .likeCount(likeCount)
-                .sellerId(sellerId)
+                .sellerId(seller.getId())
                 .build();
     }
 }
