@@ -38,6 +38,12 @@ public class UserService {
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
     }
 
+    public User getUserByEmail(String email) {
+        log.info("Start getUserByEmail: {}", email);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new DataNotFoundException("해당 email의 유저가 없습니다."));
+    }
+
     @Transactional
     public void deleteUser(long userId) {
         log.info("Start delete User");

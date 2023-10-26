@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface CartRepositoryCustom {
     List<Cart> findCartByUserId(long userId, Pageable pageable);
-    long countCartByUserId(long userId);
+    long countCartByEmail(String email);
     List<Cart> findAllByUserId(long userId);
     boolean isAlreadyExistentProductInUserCart(long userId, long productId);
 }
