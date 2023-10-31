@@ -95,17 +95,13 @@ public class CartService {
 
         List<Cart> carts = cartRepository.findAllByUserId(userId);
 
-        int sum = 0;
-
-        for (Cart cart : carts) {
-            int quantity = cart.getQuantity();
-            long productId = cart.getProductId();
-            int price = productService.getProduct(productId).getPrice();
-            sum += quantity * price;
-        }
-
-        log.info("Calculate cart's total price");
-        return sum;
+        return carts.parallelStream()
+                .mapToInt(cart -> {
+                    int quantity = cart.getQuantity();
+                    long productId = cart.getProductId();
+                    int price = productService.getProduct(productId).getPrice();
+                    return quantity * price;
+                }).sum();
     }
 
     private Cart getCart(long cartId) {
