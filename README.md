@@ -46,9 +46,12 @@ Java11, Spring Boot 2.x, Gradle, JPA, Redis, MySQL, OAuth 2.0, Docker, Jenkins, 
 
 [유스케이스 설명](https://github.com/f-lab-edu/commerce-market/wiki/%EC%84%9C%EB%B9%84%EC%8A%A4-%EC%9C%A0%EC%8A%A4%EC%BC%80%EC%9D%B4%EC%8A%A4)
 
+# OAuth 인가 시퀀스 다이어그램
+![인가 시퀀스다이어그램](https://github.com/f-lab-edu/commerce-market/assets/96982575/de3d0d53-4e10-4b31-9fcb-7fe64efc4fc9)
+
+자세한 내용은 [wiki](https://github.com/f-lab-edu/commerce-market/wiki/OAuth-2.0-%EB%A1%9C%EA%B7%B8%EC%9D%B8-%EB%8F%99%EC%9E%91%EA%B3%BC%EC%A0%95)를 확인해 주시면 감사하겠습니다.
+ 
 # 화면 프로토타입
 ![화면프로토콜 drawio](https://github.com/f-lab-edu/commerce-market/assets/96982575/68e0ec04-612d-4431-b4ed-ddb7f7446282)
-
-
 
 
