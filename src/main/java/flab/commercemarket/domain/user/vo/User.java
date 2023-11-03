@@ -11,7 +11,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Entity(name = "market_user")
 @Table(indexes = {
-        @Index(name = "idx_username", columnList = "username"),
+        @Index(name = "idx_name", columnList = "name"),
         @Index(name = "idx_user_id", columnList = "id")
 })
 public class User {
