@@ -4,6 +4,7 @@ import flab.commercemarket.controller.order.dto.OrderGetResponseDto;
 import flab.commercemarket.controller.order.dto.OrderResponseDto;
 import flab.commercemarket.domain.user.vo.User;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ public class Order {
     @JoinColumn(name = "buyer_id")
     private User user;
 
+    @BatchSize(size = 5)
     @OneToMany(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "order_id")
     private List<OrderProduct> orderProduct;
