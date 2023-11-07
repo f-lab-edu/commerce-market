@@ -17,4 +17,9 @@ public class AuthorizationHelper {
         OAuth2User principal = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return principal.getAttribute("email");
     }
+
+    public String getPrincipalEmail() {
+        OAuth2User principal = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return principal.getAttribute("email");
+    }
 }

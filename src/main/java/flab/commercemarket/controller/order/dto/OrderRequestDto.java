@@ -10,8 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderRequestDto {
-    private long buyerId;
-    private String requestMessage;
     private List<OrderProductRequestDto> products;
 }
 

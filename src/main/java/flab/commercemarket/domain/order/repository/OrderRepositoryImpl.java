@@ -18,20 +18,20 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     }
 
     @Override
-    public List<Order> findBetweenDateTime(LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable) {
+    public List<Order> findBetweenDateTime(long userId, LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable) {
         return queryFactory
                 .selectFrom(order)
-                .where(order.orderedAt.between(startDateTime, endDateTime))
+                .where(order.orderedAt.between(startDateTime, endDateTime).and(order.user.id.eq(userId)))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
     }
 
     @Override
-    public long countOrderBetweenDate(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public long countOrderBetweenDate(long userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         return queryFactory
                 .selectFrom(order)
-                .where(order.orderedAt.between(startDateTime, endDateTime))
+                .where(order.orderedAt.between(startDateTime, endDateTime).and(order.user.id.eq(userId)))
                 .stream()
                 .count();
     }

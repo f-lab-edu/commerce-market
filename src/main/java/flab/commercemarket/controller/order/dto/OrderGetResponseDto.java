@@ -1,7 +1,6 @@
 package flab.commercemarket.controller.order.dto;
 
-import flab.commercemarket.domain.order.vo.OrderProduct;
-import flab.commercemarket.domain.user.vo.User;
+import flab.commercemarket.controller.user.dto.UserResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,10 +14,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderResponseDto {
+public class OrderGetResponseDto {
     private long id;
-    private User user;
-    private List<OrderProduct> orderProduct;
+    private UserResponseDto user;
+    private List<OrderProductDto>orderProductDto;
     private LocalDateTime orderedAt;
     private BigDecimal orderPrice;
     private String merchantUid;
