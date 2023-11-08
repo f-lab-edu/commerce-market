@@ -22,10 +22,10 @@ public class CartController {
 
     @PostMapping
     public CartResponseDto postCart(@RequestBody CartDto cartDto) {
+        // todo 세션정보로 로그인한 userId 확인 -> Dto에서 사용하는 userId 삭제
+        long userId = cartDto.getUserId();
 
-        long loginUserId = cartDto.getUserId(); // todo 토큰에서 조회하도록 변경
-
-        Cart registerCart = cartService.registerCart(cartDto, loginUserId);
+        Cart registerCart = cartService.registerCart(cartDto, userId);
         return registerCart.toCartResponseDto();
     }
 

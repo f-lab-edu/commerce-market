@@ -1,8 +1,10 @@
 package flab.commercemarket.domain.order;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
+import flab.commercemarket.domain.cart.vo.Cart;
 import flab.commercemarket.domain.order.repository.OrderRepository;
 import flab.commercemarket.common.utils.DateUtils;
 import flab.commercemarket.domain.order.vo.Order;
@@ -29,7 +31,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final AuthorizationHelper authorizationHelper;
     private final UserService userService;
     private final ProductService productService;
     private final OrderRepository orderRepository;
@@ -38,7 +39,6 @@ public class OrderService {
     @Transactional
     public Order registerOrder(long loginUserId, OrderRequestDto orderRequestDto) {
         log.info("Start registerOrder");
-        authorizationHelper.checkUserAuthorization(orderRequestDto.getBuyerId(), loginUserId);
         User buyer = userService.getUserById(orderRequestDto.getBuyerId());
         List<OrderProduct> orderProductList = createOrderProductList(orderRequestDto);
 
@@ -80,12 +80,17 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrder(long orderId, long loginUserId) {
+    public void deleteOrder(long orderId, long userId) {
         log.info("Start deleteOrder. orderId: {}", orderId);
-
         Order order = getOrder(orderId);
-        authorizationHelper.checkUserAuthorization(order.getUserId(), loginUserId);
+        checkAuthorization(userId, order);
         orderRepository.delete(order);
+    }
+
+    private void checkAuthorization(long userId, Order foundOrder) {
+        if (userId != foundOrder.getUserId()) {
+            throw new ForbiddenException("권한 정보 일치하지 않음");
+        }
     }
 
     private List<OrderProduct> createOrderProductList(OrderRequestDto orderRequestDto) {
@@ -94,7 +99,7 @@ public class OrderService {
         return orderRequestDto.getProducts()
                 .stream()
                 .map(orderProductRequestDto -> {
-                    Product foundProduct = productService.getProduct(orderProductRequestDto.getProductId());
+                    Product foundProduct = productService.getProductById(orderProductRequestDto.getProductId());
                     int quantity = orderProductRequestDto.getQuantity();
                     BigDecimal productPrice = BigDecimal.valueOf(foundProduct.getPrice());
                     BigDecimal productTotalPrice = productPrice.multiply(BigDecimal.valueOf(quantity));

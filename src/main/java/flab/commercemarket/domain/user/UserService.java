@@ -31,18 +31,18 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User getUserById(long id) {
+    public User getUserById(long userId) {
         log.info("Start getUserById");
 
-        return userRepository.findById(id)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("해당 id의 유저가 없습니다."));
     }
 
     @Transactional
-    public void deleteOne(long id) {
+    public void deleteUser(long userId) {
         log.info("Start delete User");
 
-        User foundUser = getUserById(id);
+        User foundUser = getUserById(userId);
         userRepository.delete(foundUser);
         log.info("Delete User. userId = {}", foundUser.getId());
     }

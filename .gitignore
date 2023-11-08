@@ -69,6 +69,5 @@ Temporary Items
 *.rar
 hs_err_pid*
 
-application-local.yml
-application-studytest.yml
+application-test.yml
 log

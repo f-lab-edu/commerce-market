@@ -27,9 +27,7 @@ public class WishListController {
     }
 
     @GetMapping
-    public PageResponseDto<WishListResponseDto> getWishLists(@RequestParam long userId,
-                                        @RequestParam int page,
-                                        @RequestParam int size) {
+    public PageResponseDto<WishListResponseDto> getWishLists(@RequestParam long userId, @RequestParam int page, @RequestParam int size) {
         List<WishList> wishLists = wishListService.findWishLists(userId, page, size);
         long totalElements = wishListService.countWishListByUserId(userId);
 

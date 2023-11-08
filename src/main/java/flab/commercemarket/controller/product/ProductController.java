@@ -24,8 +24,7 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto postProduct(@RequestBody ProductDto productDto) {
-        Product product = productDto.toProduct();
-        Product createdProduct = productService.registerProduct(product);
+        Product createdProduct = productService.registerProduct(productDto);
         return createdProduct.toProductResponseDto();
     }
 
@@ -33,15 +32,15 @@ public class ProductController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto patchProduct(@PathVariable("productId") long productId,
                                            @RequestBody @Validated ProductDto productDto) {
-        Product product = productDto.toProduct();
-        Product updateProduct = productService.updateProduct(productId, product);
+        // todo 게시물 소유자와 로그인한 userId 일치 여부 확인
+        Product updateProduct = productService.updateProduct(productId, productDto);
 
         return updateProduct.toProductResponseDto();
     }
 
     @GetMapping("/{productId}")
     public ProductResponseDto getProduct(@PathVariable("productId") long productId) {
-        Product product = productService.getProduct(productId);
+        Product product = productService.getProductById(productId);
         return product.toProductResponseDto();
     }
 
@@ -80,8 +79,9 @@ public class ProductController {
 
     @DeleteMapping("/{productId}")
     @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
-    public void deleteProduct(@PathVariable("productId") long productId, @RequestParam long loginUserId) {
-        productService.deleteProduct(productId, loginUserId);
+    public void deleteProduct(@PathVariable("productId") long productId) {
+        // todo 게시물 소유자와 로그인한 userId 일치 여부 확인
+        productService.deleteProduct(productId);
     }
 
     @PostMapping("/{productId}/likes")

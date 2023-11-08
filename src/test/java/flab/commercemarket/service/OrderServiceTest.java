@@ -1,11 +1,10 @@
-package flab.commercemarket.order;
+package flab.commercemarket.service;
 
 import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.common.utils.DateUtils;
 import flab.commercemarket.controller.order.dto.OrderProductRequestDto;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
-import flab.commercemarket.controller.order.dto.OrderResponseDto;
 import flab.commercemarket.domain.order.OrderService;
 import flab.commercemarket.domain.order.repository.OrderRepository;
 import flab.commercemarket.domain.order.vo.Order;
@@ -14,12 +13,12 @@ import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import flab.commercemarket.domain.user.UserService;
 import flab.commercemarket.domain.user.vo.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -30,12 +29,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
 
     @Mock
@@ -56,30 +56,27 @@ public class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
+    long userId = 1L;
+    long productId = 1L;
+    User user;
+    Product product;
+
     @BeforeEach
-    public void init() {
-        MockitoAnnotations.openMocks(this);
+    void init() {
+        user = User.builder().id(userId).build();
+        product = Product.builder().id(productId).name("product name").price(100).build();
     }
 
     @Test
     public void registerOrderTest() throws Exception {
         // given
-        long userId = 1L;
-        User user = User.builder().build();
-        user.setId(userId);
-
-        // 주문 상품 목록 생성
         List<OrderProductRequestDto> orderProductRequestDtos = createSampleOrderProductRequestDto();
         OrderRequestDto orderRequestDto = new OrderRequestDto(userId, "Hello", orderProductRequestDtos);
 
-        // userService.getUserById() 목 객체 설정
         when(userService.getUserById(userId)).thenReturn(user);
-
-        // productService.getProduct() 목 객체 설정
         Product product = Product.builder().price(5000).build();
-        when(productService.getProduct(anyLong())).thenReturn(product);
+        when(productService.getProductById(anyLong())).thenReturn(product);
 
-        // orderRepository.save() 목 객체 설정
         Order savedOrder = Order.builder()
                 .id(100L)
                 .user(user)
@@ -101,7 +98,7 @@ public class OrderServiceTest {
     @Test
     public void getOrderTest() throws Exception {
         long orderId = 1L;
-        Order existingOrder = createSampleOrder(orderId);
+        Order existingOrder = orderFixture(orderId);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(existingOrder));
 
         Order order = orderService.getOrder(orderId);
@@ -158,57 +155,34 @@ public class OrderServiceTest {
     public void deleteOrderTest() {
         // given
         long orderId = 123;
-        long ownerId = 456;
-
-        User user = User.builder().build();
-        user.setId(ownerId);
         Order order = Order.builder().id(1L).user(user).build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        doNothing().when(authorizationHelper).checkUserAuthorization(order.getUserId(), ownerId);
 
         // when
-        orderService.deleteOrder(orderId, ownerId);
+        orderService.deleteOrder(orderId, userId);
 
         // then
         verify(orderRepository, times(1)).delete(order);
     }
 
     @Test
-    public void deleteOrderTest_forbidden() {
+    public void deleteOrderTest_Forbidden_Exception() {
         // given
-        long orderId = 123;
-        long loginUserId = 456;
-        long ownerId = 456;
-
-        User user = User.builder().build();
-        user.setId(ownerId);
-        Order order = Order.builder().id(1L).user(user).build();
-
+        long unauthorizedUserId = 99;
+        long orderId = 1L;
+        Order order = orderFixture(orderId);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-        doThrow(new ForbiddenException("유저 권한 정보가 일치하지 않음"))
-                .when(authorizationHelper)
-                .checkUserAuthorization(ownerId, loginUserId);
-
-        // when
-        assertThrows(ForbiddenException.class, () -> {
-            orderService.deleteOrder(orderId, loginUserId);
-        });
 
         // then
-        verify(orderRepository, times(0)).delete(order);
+        assertThrows(ForbiddenException.class, () ->
+                orderService.deleteOrder(orderId, unauthorizedUserId));
     }
 
-    private Order createSampleOrder(long orderId) {
-        User user = User.builder()
-                .username("sampleUser")
-                .build();
-
-        user.setId(1L);
-
+    private Order orderFixture(long orderId) {
         OrderProduct orderProduct = OrderProduct.builder()
                 .id(1L)
-                .product(createSampleProduct(1L)) // 임의의 상품(Product) 객체 생성
+                .product(product)
                 .quantity(2)
                 .totalPrice(BigDecimal.valueOf(200.0))
                 .build();
@@ -220,14 +194,6 @@ public class OrderServiceTest {
                 .requestMessage("Sample order request")
                 .orderedAt(LocalDateTime.now())
                 .orderPrice(BigDecimal.valueOf(200.0))
-                .build();
-    }
-
-    private Product createSampleProduct(long productId) {
-        return Product.builder()
-                .id(productId)
-                .name("Sample Product")
-                .price(100)
                 .build();
     }
 
