@@ -1,5 +1,6 @@
 package flab.commercemarket.controller.product;
 
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.common.responsedto.PageResponseDto;
 import flab.commercemarket.controller.product.dto.ProductDto;
 import flab.commercemarket.controller.product.dto.ProductResponseDto;
@@ -20,11 +21,14 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
+    private final AuthorizationHelper authorizationHelper;
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto postProduct(@RequestBody ProductDto productDto) {
-        Product createdProduct = productService.registerProduct(productDto);
+        String email = authorizationHelper.getPrincipalEmail();
+
+        Product createdProduct = productService.registerProduct(email, productDto);
         return createdProduct.toProductResponseDto();
     }
 
@@ -32,8 +36,8 @@ public class ProductController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ProductResponseDto patchProduct(@PathVariable("productId") long productId,
                                            @RequestBody @Validated ProductDto productDto) {
-        // todo 게시물 소유자와 로그인한 userId 일치 여부 확인
-        Product updateProduct = productService.updateProduct(productId, productDto);
+        String email = authorizationHelper.getPrincipalEmail();
+        Product updateProduct = productService.updateProduct(email, productId, productDto);
 
         return updateProduct.toProductResponseDto();
     }
@@ -80,8 +84,8 @@ public class ProductController {
     @DeleteMapping("/{productId}")
     @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
     public void deleteProduct(@PathVariable("productId") long productId) {
-        // todo 게시물 소유자와 로그인한 userId 일치 여부 확인
-        productService.deleteProduct(productId);
+        String email = authorizationHelper.getPrincipalEmail();
+        productService.deleteProduct(productId, email);
     }
 
     @PostMapping("/{productId}/likes")

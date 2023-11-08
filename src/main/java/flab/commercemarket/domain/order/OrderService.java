@@ -77,7 +77,6 @@ public class OrderService {
         log.info("Start deleteOrder. orderId: {}", orderId);
 
         Order order = getOrder(orderId);
-        authorizationHelper.checkUserAuthorization(order.getUserId(), loginUserId);
         orderRepository.delete(order);
     }
 
@@ -114,7 +113,7 @@ public class OrderService {
         BigDecimal orderPrice = orderRequestDto.getProducts().stream()
                 .map(product -> {
                     long productId = product.getProductId();
-                    Product foundProduct = productService.getProduct(productId);
+                    Product foundProduct = productService.getProductById(productId);
                     return BigDecimal.valueOf(product.getQuantity()).multiply(BigDecimal.valueOf(foundProduct.getPrice()));
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -125,7 +124,7 @@ public class OrderService {
         return orderRequestDto.getProducts()
                 .stream()
                 .map(orderProductRequestDto -> {
-                    Product foundProduct = productService.getProduct(orderProductRequestDto.getProductId());
+                    Product foundProduct = productService.getProductById(orderProductRequestDto.getProductId());
                     int quantity = orderProductRequestDto.getQuantity();
                     return OrderProduct.builder()
                             .product(foundProduct)

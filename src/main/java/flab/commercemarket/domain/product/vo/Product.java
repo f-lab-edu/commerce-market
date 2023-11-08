@@ -23,7 +23,6 @@ public class Product {
     private int price;
     private String imageUrl;
     private String description;
-    private int stockAmount;
     private int likeCount;
 
     @ManyToOne
