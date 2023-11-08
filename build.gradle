@@ -9,6 +9,7 @@ plugins {
 	id 'org.springframework.boot' version '2.7.12'
 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 	id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
+	id "me.champeau.jmh" version "0.6.2"
 }
 
 group = 'com.flab'
@@ -63,4 +64,10 @@ configurations {
 }
 compileQuerydsl {
 	options.annotationProcessorPath = configurations.querydsl
+}
+
+jmh {
+	fork = 1
+	warmupIterations = 1
+	iterations = 1
 }
