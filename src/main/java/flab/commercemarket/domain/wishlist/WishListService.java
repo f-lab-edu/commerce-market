@@ -3,7 +3,6 @@ package flab.commercemarket.domain.wishlist;
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
 import flab.commercemarket.common.exception.ForbiddenException;
-import flab.commercemarket.domain.cart.vo.Cart;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import flab.commercemarket.domain.user.UserService;
@@ -30,12 +29,12 @@ public class WishListService {
     private final ProductService productService;
 
     @Transactional
-    public WishList registerWishList(long userId, long productId) {
+    public WishList registerWishList(String email, long productId) {
         log.info("Start registerWishList");
+        User foundUser = userService.getUserByEmail(email);
 
-        User foundUser = userService.getUserById(userId);
-        Product foundProduct = productService.getProductById(productId);
-        verifyDuplicatedWishList(userId, productId);
+        Product foundProduct = productService.getProduct(productId);
+        verifyDuplicatedWishList(foundUser.getId(), productId);
 
         WishList wishList = WishList.builder()
                 .user(foundUser)
@@ -43,33 +42,32 @@ public class WishListService {
                 .build();
 
         WishList savedWishList = wishListRepository.save(wishList);
-        log.info("userId = {}, productId = {}", userId, productId);
+        log.info("user's email = {}, productId = {}", email, productId);
         return savedWishList;
     }
 
     @Transactional(readOnly = true)
-    public List<WishList> findWishLists(long userId, int page, int size) {
-        log.info("Start registerWishList");
-
+    public List<WishList> findWishLists(String email, int page, int size) {
+        log.info("Start findWishLists");
         Pageable pageable = PageRequest.of(page - 1, size);
-
-        log.info("Get WishList userId = {}", userId);
-        return wishListRepository.findAllByUserId(userId, pageable);
+        User foundUser = userService.getUserByEmail(email);
+        return wishListRepository.findAllByUserId(foundUser.getId(), pageable);
     }
 
     @Transactional(readOnly = true)
-    public long countWishListByUserId(long userId) {
-        log.info("Start getWishListCountByUserId = {}", userId);
-
-        return wishListRepository.countByUserId(userId);
+    public long countWishListByUserId(String email) {
+        log.info("Start getWishListCountByUserId");
+        User foundUser = userService.getUserByEmail(email);
+        return wishListRepository.countByUserId(foundUser.getId());
     }
 
     @Transactional
-    public void deleteWishList(long userId, long wishListId) {
+    public void deleteWishList(String email, long wishListId) {
         log.info("Start Delete WishList");
-
         WishList foundWishList = getWishList(wishListId);
-        checkAuthorization(userId, foundWishList);
+        User foundUser = userService.getUserByEmail(email);
+
+        checkUserAuthorization(foundWishList.getUserId(), foundUser.getId());
 
         wishListRepository.delete(foundWishList);
         log.info("Delete WishList = {}", wishListId);
@@ -96,9 +94,10 @@ public class WishListService {
         }
     }
 
-    private void checkAuthorization(long userId, WishList foundWishList) {
-        if (userId != foundWishList.getUserId()) {
-            throw new ForbiddenException("권한 정보 일치하지 않음");
+    private void checkUserAuthorization(long ownerUserId, long loginUserId) {
+        if (ownerUserId != loginUserId) {
+            log.info("dataUserId = {}, loginUserId = {}", ownerUserId, loginUserId);
+            throw new ForbiddenException("유저 권한정보가 일치하지 않음");
         }
     }
 }

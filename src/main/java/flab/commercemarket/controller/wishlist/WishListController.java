@@ -1,5 +1,6 @@
 package flab.commercemarket.controller.wishlist;
 
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.common.responsedto.PageResponseDto;
 import flab.commercemarket.controller.wishlist.dto.WishListResponseDto;
 import flab.commercemarket.domain.wishlist.WishListService;
@@ -18,18 +19,21 @@ import java.util.stream.Collectors;
 public class WishListController {
 
     private final WishListService wishListService;
+    private final AuthorizationHelper authorizationHelper;
 
     @PostMapping("/{productId}")
-    public WishListResponseDto postWishList(@PathVariable long productId, @RequestParam long userId) {
+    public WishListResponseDto postWishList(@PathVariable long productId) {
         // TODO @RequestParam long userId 제거 -> 로그인 정보에서 userId 가져오도록 refactoring
-        WishList wishList = wishListService.registerWishList(userId, productId);
+        String principalEmail = authorizationHelper.getPrincipalEmail();
+        WishList wishList = wishListService.registerWishList(principalEmail, productId);
         return wishList.toWishlistResponseDto();
     }
 
     @GetMapping
-    public PageResponseDto<WishListResponseDto> getWishLists(@RequestParam long userId, @RequestParam int page, @RequestParam int size) {
-        List<WishList> wishLists = wishListService.findWishLists(userId, page, size);
-        long totalElements = wishListService.countWishListByUserId(userId);
+    public PageResponseDto<WishListResponseDto> getWishLists(@RequestParam int page, @RequestParam int size) {
+        String principalEmail = authorizationHelper.getPrincipalEmail();
+        List<WishList> wishLists = wishListService.findWishLists(principalEmail, page, size);
+        long totalElements = wishListService.countWishListByUserId(principalEmail);
 
         List<WishListResponseDto> wishListResponseList = wishLists.stream()
                 .map(WishList::toWishlistResponseDto)
@@ -44,7 +48,8 @@ public class WishListController {
     }
 
     @DeleteMapping("/{wishListId}")
-    public void deleteWishList(@PathVariable long wishListId, @RequestParam long userId) {
-        wishListService.deleteWishList(userId, wishListId);
+    public void deleteWishList(@PathVariable long wishListId) {
+        String principalEmail = authorizationHelper.getPrincipalEmail();
+        wishListService.deleteWishList(principalEmail, wishListId);
     }
 }

@@ -1,11 +1,10 @@
 package flab.commercemarket.domain.product;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
-import flab.commercemarket.controller.product.dto.ProductDto;
+import flab.commercemarket.common.exception.ForbiddenException;
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.domain.product.repository.ProductRepository;
 import flab.commercemarket.domain.product.vo.Product;
-import flab.commercemarket.domain.user.UserService;
-import flab.commercemarket.domain.user.vo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,21 +23,10 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final UserService userService;
 
     @Transactional
-    public Product registerProduct(ProductDto productDto) {
+    public Product registerProduct(Product product) {
         log.info("Start registerProduct");
-
-        User foundUser = userService.getUserById(productDto.getSellerId());
-
-        Product product = Product.builder()
-                .name(productDto.getName())
-                .price(productDto.getPrice())
-                .imageUrl(productDto.getImageUrl())
-                .description(productDto.getDescription())
-                .seller(foundUser)
-                .build();
 
         productRepository.save(product);
 
@@ -47,22 +35,25 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(long productId, ProductDto productDto) {
+    public Product updateProduct(long productId, Product data) {
         log.info("Start updateProduct");
 
-        Product foundProduct = getProductById(productId);
+        Product foundProduct = getProduct(productId);
 
-        foundProduct.setName(productDto.getName());
-        foundProduct.setPrice(productDto.getPrice());
-        foundProduct.setImageUrl(productDto.getImageUrl());
-        foundProduct.setDescription(productDto.getDescription());
+        checkUserAuthorization(foundProduct.getSellerId(), data.getSellerId());
+
+        foundProduct.setName(data.getName());
+        foundProduct.setPrice(data.getPrice());
+        foundProduct.setImageUrl(data.getImageUrl());
+        foundProduct.setDescription(data.getDescription());
+        foundProduct.setStockAmount(data.getStockAmount());
 
         log.info("Update Product. productId = {}", productId);
         return foundProduct;
     }
 
     @Transactional(readOnly = true)
-    public Product getProductById(long productId) {
+    public Product getProduct(long productId) {
         log.info("Start get ProductId: {}", productId);
 
         Optional<Product> optionalProduct = productRepository.findById(productId);
@@ -97,9 +88,10 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(long productId) {
-        Product foundProduct = getProductById(productId);
+    public void deleteProduct(long productId, long loginUserId) {
+        Product foundProduct = getProduct(productId);
 
+        checkUserAuthorization(foundProduct.getSellerId(), loginUserId);
         productRepository.delete(foundProduct);
         log.info("Delete Product. ProductId = {}", productId);
     }
@@ -107,11 +99,18 @@ public class ProductService {
     @Transactional
     public void updateLikeCount(long productId) {
         log.info("Start increaseLikeCount");
-        Product foundProduct = getProductById(productId);
+        Product foundProduct = getProduct(productId);
 
         int likeCount = foundProduct.getLikeCount();
         int newLikeCount = likeCount + 1;
 
         foundProduct.setLikeCount(newLikeCount);
+    }
+
+    private void checkUserAuthorization(long ownerUserId, long loginUserId) {
+        if (ownerUserId != loginUserId) {
+            log.info("dataUserId = {}, loginUserId = {}", ownerUserId, loginUserId);
+            throw new ForbiddenException("유저 권한정보가 일치하지 않음");
+        }
     }
 }

@@ -28,11 +28,11 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
     }
 
     @Override
-    public long countCartByUserId(long userId) {
+    public long countCartByEmail(String email) {
         Long totalCount = queryFactory
                 .select(QCart.cart.count())
                 .from(QCart.cart)
-                .where(QCart.cart.user.id.eq(userId))
+                .where(QCart.cart.user.email.eq(email))
                 .fetchOne();
 
         return totalCount != null ? totalCount : 0L;

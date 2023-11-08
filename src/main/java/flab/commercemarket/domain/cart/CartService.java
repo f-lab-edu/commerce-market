@@ -2,7 +2,7 @@ package flab.commercemarket.domain.cart;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.DuplicateDataException;
-import flab.commercemarket.common.helper.AuthorizationHelper;
+import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.controller.cart.dto.CartDto;
 import flab.commercemarket.domain.cart.repository.CartRepository;
 import flab.commercemarket.domain.cart.vo.Cart;
@@ -27,17 +27,15 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ProductService productService;
     private final UserService userService;
-    private final AuthorizationHelper authorizationHelper;
 
     @Transactional
-    public Cart registerCart(CartDto data, long userId) {
+    public Cart registerCart(CartDto data, String email) {
         log.info("Start registerCart");
 
-        authorizationHelper.checkUserAuthorization(data.getUserId(), userId);
-        User foundUser = userService.getUserById(data.getUserId());
+        User foundUser = userService.getUserByEmail(email);
         Product foundProduct = productService.getProduct(data.getProductId());
 
-        checkDuplicateCartItem(userId, data.getProductId());
+        checkDuplicateCartItem(foundUser.getId(), data.getProductId());
 
         Cart cart = Cart.builder()
                 .user(foundUser)
@@ -52,48 +50,50 @@ public class CartService {
     }
 
     @Transactional
-    public Cart updateCart(CartDto data, long cartId, long userId) {
+    public Cart updateCart(CartDto data, long cartId, String email) {
         log.info("Start updateCart");
 
         Cart foundCart = getCart(cartId);
-        authorizationHelper.checkUserAuthorization(foundCart.getUserId(), userId);
+        User foundUser = userService.getUserByEmail(email);
+        checkUserAuthorization(foundCart.getUserId(), foundUser.getId());
 
         foundCart.setQuantity(data.getQuantity());
-        Cart savedCart = cartRepository.save(foundCart);
 
         log.info("Update cart. {}", foundCart);
-        return savedCart;
+        return foundCart;
     }
 
     @Transactional(readOnly = true)
-    public List<Cart> findCarts(long userId, int page, int size) {
-        log.info("Start getCarts. userId = {}", userId);
+    public List<Cart> findCarts(String email, int page, int size) {
+        log.info("Start getCarts. email = {}", email);
+        User foundUser = userService.getUserByEmail(email);
 
         Pageable pageable = PageRequest.of(page - 1, size);
-        return cartRepository.findCartByUserId(userId, pageable);
+        return cartRepository.findCartByUserId(foundUser.getId(), pageable);
     }
 
     @Transactional(readOnly = true)
-    public long countCartByUserId(long userId) {
-        return cartRepository.countCartByUserId(userId);
+    public long countCartByUserId(String email) {
+        return cartRepository.countCartByEmail(email);
     }
 
     @Transactional
-    public void deleteCart(long cartId, long userId) {
+    public void deleteCart(String email, long cartId) {
         log.info("Start deleteCart");
 
         Cart foundCart = getCart(cartId);
-        authorizationHelper.checkUserAuthorization(foundCart.getUserId(), userId);
+        User foundUser = userService.getUserByEmail(email);
+        checkUserAuthorization(foundCart.getUserId(), foundUser.getId());
 
         cartRepository.delete(foundCart);
         log.info("Delete Cart. cartId = {}", cartId);
     }
 
     @Transactional(readOnly = true)
-    public int calculateTotalPrice(long userId) {
-        log.info("Start calculateTotalPrice. userId: {}", userId);
-
-        List<Cart> carts = cartRepository.findAllByUserId(userId);
+    public int calculateTotalPrice(String email) {
+        log.info("Start calculateTotalPrice. email: {}", email);
+        User foundUser = userService.getUserByEmail(email);
+        List<Cart> carts = cartRepository.findAllByUserId(foundUser.getId());
 
         return carts.parallelStream()
                 .mapToInt(cart -> {
@@ -121,4 +121,10 @@ public class CartService {
         }
     }
 
+    private void checkUserAuthorization(long ownerUserId, long loginUserId) {
+        if (ownerUserId != loginUserId) {
+            log.info("dataUserId = {}, loginUserId = {}", ownerUserId, loginUserId);
+            throw new ForbiddenException("유저 권한정보가 일치하지 않음");
+        }
+    }
 }

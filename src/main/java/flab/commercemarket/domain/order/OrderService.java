@@ -4,7 +4,6 @@ import flab.commercemarket.common.exception.DataNotFoundException;
 import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
-import flab.commercemarket.domain.cart.vo.Cart;
 import flab.commercemarket.domain.order.repository.OrderRepository;
 import flab.commercemarket.common.utils.DateUtils;
 import flab.commercemarket.domain.order.vo.Order;
@@ -39,6 +38,7 @@ public class OrderService {
     @Transactional
     public Order registerOrder(long loginUserId, OrderRequestDto orderRequestDto) {
         log.info("Start registerOrder");
+        checkUserAuthorization(orderRequestDto.getBuyerId(), loginUserId);
         User buyer = userService.getUserById(orderRequestDto.getBuyerId());
         List<OrderProduct> orderProductList = createOrderProductList(orderRequestDto);
 
@@ -80,17 +80,12 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrder(long orderId, long userId) {
+    public void deleteOrder(long orderId, long loginUserId) {
         log.info("Start deleteOrder. orderId: {}", orderId);
-        Order order = getOrder(orderId);
-        checkAuthorization(userId, order);
-        orderRepository.delete(order);
-    }
 
-    private void checkAuthorization(long userId, Order foundOrder) {
-        if (userId != foundOrder.getUserId()) {
-            throw new ForbiddenException("권한 정보 일치하지 않음");
-        }
+        Order order = getOrder(orderId);
+        checkUserAuthorization(order.getUserId(), loginUserId);
+        orderRepository.delete(order);
     }
 
     private List<OrderProduct> createOrderProductList(OrderRequestDto orderRequestDto) {
@@ -99,7 +94,7 @@ public class OrderService {
         return orderRequestDto.getProducts()
                 .stream()
                 .map(orderProductRequestDto -> {
-                    Product foundProduct = productService.getProductById(orderProductRequestDto.getProductId());
+                    Product foundProduct = productService.getProduct(orderProductRequestDto.getProductId());
                     int quantity = orderProductRequestDto.getQuantity();
                     BigDecimal productPrice = BigDecimal.valueOf(foundProduct.getPrice());
                     BigDecimal productTotalPrice = productPrice.multiply(BigDecimal.valueOf(quantity));
@@ -138,5 +133,12 @@ public class OrderService {
     private String merchantUidBuilder(long loginUserId, LocalDateTime orderedAt) {
         int mills = orderedAt.getNano();
         return String.format("merch_%03d_%d", mills, loginUserId);
+    }
+
+    private void checkUserAuthorization(long ownerUserId, long loginUserId) {
+        if (ownerUserId != loginUserId) {
+            log.info("dataUserId = {}, loginUserId = {}", ownerUserId, loginUserId);
+            throw new ForbiddenException("유저 권한정보가 일치하지 않음");
+        }
     }
 }
