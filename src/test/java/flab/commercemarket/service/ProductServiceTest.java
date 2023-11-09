@@ -47,6 +47,8 @@ public class ProductServiceTest {
 
     ProductDto productDto;
 
+    String email;
+
     @BeforeEach
     void init() {
         seller = User.builder()
@@ -60,8 +62,9 @@ public class ProductServiceTest {
                 "product name",
                 10000,
                 "product picture",
-                "product description",
-                seller.getId());
+                "product description");
+
+        email = "abc@gmail.com";
     }
 
     @Test
@@ -70,11 +73,11 @@ public class ProductServiceTest {
         // given
         Product product = productFixture(1L);
 
-        when(userService.getUserById(productDto.getSellerId())).thenReturn(seller);
+        when(userService.getUserByEmail(email)).thenReturn(seller);
         when(productRepository.save(any(Product.class))).thenReturn(product);
 
         // when
-        Product registeredProduct = productService.registerProduct(productDto);
+        Product registeredProduct = productService.registerProduct(email, productDto);
 
         // then
         assertNotNull(registeredProduct);
@@ -93,16 +96,16 @@ public class ProductServiceTest {
         Product product = productFixture(productId);
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(userService.getUserByEmail(email)).thenReturn(seller);
         ProductDto changeProduct = new ProductDto(
                 "change product name",
                 100,
                 "change product picture",
-                "change product description",
-                seller.getId()
+                "change product description"
         );
 
         // when
-        Product updatedProduct = productService.updateProduct(productId, changeProduct);
+        Product updatedProduct = productService.updateProduct(email, productId, changeProduct);
 
         // then
         assertNotNull(updatedProduct);
@@ -124,7 +127,7 @@ public class ProductServiceTest {
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            productService.updateProduct(productId, productDto);
+            productService.updateProduct(email, productId, productDto);
         });
     }
 
@@ -205,13 +208,13 @@ public class ProductServiceTest {
     public void deleteProductTest() {
         // given
         long productId = 1L;
-        Product product = new Product(); // 가상의 제품 객체
+        Product product = productFixture(productId); // 가상의 제품 객체
 
-        when(productRepository.findById(productId))
-                .thenReturn(Optional.of(product));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(userService.getUserByEmail(email)).thenReturn(seller);
 
         // when
-        productService.deleteProduct(productId);
+        productService.deleteProduct(productId, email);
 
         // then
         verify(productRepository, times(1)).delete(eq(product));

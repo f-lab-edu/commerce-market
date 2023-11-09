@@ -1,7 +1,6 @@
 package flab.commercemarket.service;
 
 import flab.commercemarket.common.exception.ForbiddenException;
-import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.common.utils.DateUtils;
 import flab.commercemarket.controller.order.dto.OrderProductRequestDto;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
@@ -12,6 +11,7 @@ import flab.commercemarket.domain.order.vo.OrderProduct;
 import flab.commercemarket.domain.product.ProductService;
 import flab.commercemarket.domain.product.vo.Product;
 import flab.commercemarket.domain.user.UserService;
+import flab.commercemarket.domain.user.vo.Role;
 import flab.commercemarket.domain.user.vo.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,9 +39,6 @@ import static org.mockito.Mockito.*;
 public class OrderServiceTest {
 
     @Mock
-    private AuthorizationHelper authorizationHelper;
-
-    @Mock
     private UserService userService;
 
     @Mock
@@ -60,20 +57,22 @@ public class OrderServiceTest {
     long productId = 1L;
     User user;
     Product product;
+    String email;
 
     @BeforeEach
     void init() {
         user = User.builder().id(userId).build();
         product = Product.builder().id(productId).name("product name").price(100).build();
+        email = "abc@gmail.com";
     }
 
     @Test
     public void registerOrderTest() throws Exception {
         // given
         List<OrderProductRequestDto> orderProductRequestDtos = createSampleOrderProductRequestDto();
-        OrderRequestDto orderRequestDto = new OrderRequestDto(userId, "Hello", orderProductRequestDtos);
+        OrderRequestDto orderRequestDto = new OrderRequestDto(orderProductRequestDtos);
 
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         Product product = Product.builder().price(5000).build();
         when(productService.getProductById(anyLong())).thenReturn(product);
 
@@ -81,14 +80,13 @@ public class OrderServiceTest {
                 .id(100L)
                 .user(user)
                 .orderProduct(createSampleOrderProduct(product, orderProductRequestDtos))
-                .requestMessage("Hello")
                 .orderedAt(LocalDateTime.MIN)
                 .orderPrice(BigDecimal.valueOf(10000.0))
                 .build();
         when(orderRepository.save(any())).thenReturn(savedOrder);
 
         // when
-        Order actualOrder = orderService.registerOrder(userId, orderRequestDto);
+        Order actualOrder = orderService.registerOrder(email, orderRequestDto);
 
         // then
         assertThat(actualOrder).isNotNull();
@@ -107,6 +105,38 @@ public class OrderServiceTest {
     }
 
     @Test
+    public void deleteOrderTest() {
+        // given
+        long orderId = 123;
+        Order order = Order.builder().id(orderId).user(user).build();
+
+        when(userService.getUserByEmail(email)).thenReturn(user);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        // when
+        orderService.deleteOrder(email, orderId);
+
+        // then
+        verify(orderRepository, times(1)).delete(order);
+    }
+
+    @Test
+    public void deleteOrderTest_Forbidden_Exception() {
+        // given
+        long unauthorizedUserId = 99;
+        User forbiddenUser = User.builder().id(unauthorizedUserId).role(Role.USER).build();
+
+        long orderId = 1L;
+        Order order = Order.builder().id(orderId).user(user).build();
+        when(userService.getUserByEmail(email)).thenReturn(forbiddenUser);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        // then
+        assertThrows(ForbiddenException.class, () ->
+                orderService.deleteOrder(email, orderId));
+    }
+
+    @Test
     public void getOrderByDateTest() {
         // given
         String startDate = "2023-09-01";
@@ -116,19 +146,20 @@ public class OrderServiceTest {
 
         LocalDateTime startDateTime = dateUtils.parseDateTime(startDate);
         LocalDateTime  endDateTime = dateUtils.parseDateTime(endDate);
+        when(userService.getUserByEmail(email)).thenReturn(user);
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
         List<Order> mockOrders = new ArrayList<>();
 
-        when(orderRepository.findBetweenDateTime(startDateTime, endDateTime, pageable)).thenReturn(mockOrders);
+        when(orderRepository.findBetweenDateTime(user.getId(), startDateTime, endDateTime, pageable)).thenReturn(mockOrders);
 
         // when
-        List<Order> result = orderService.getOrderByDate(startDate, endDate, page, size);
+        List<Order> result = orderService.getOrderByDate(email, startDate, endDate, page, size);
 
         // then
         assertThat(result).isEqualTo(mockOrders);
-        verify(orderRepository, times(1)).findBetweenDateTime(startDateTime, endDateTime, pageable);
+        verify(orderRepository, times(1)).findBetweenDateTime(user.getId(), startDateTime, endDateTime, pageable);
     }
 
     @Test
@@ -141,42 +172,15 @@ public class OrderServiceTest {
         LocalDateTime  endDateTime = dateUtils.parseDateTime(endDate);
 
         long mockCount = 10;
-        when(orderRepository.countOrderBetweenDate(startDateTime, endDateTime)).thenReturn(mockCount);
+        when(userService.getUserByEmail(email)).thenReturn(user);
+        when(orderRepository.countOrderBetweenDate(user.getId(), startDateTime, endDateTime)).thenReturn(mockCount);
 
         // when
-        long result = orderService.countOrderByDate(startDate, endDate);
+        long result = orderService.countOrderByDate(email, startDate, endDate);
 
         // then
         assertThat(result).isEqualTo(mockCount);
-        verify(orderRepository, times(1)).countOrderBetweenDate(startDateTime, endDateTime);
-    }
-
-    @Test
-    public void deleteOrderTest() {
-        // given
-        long orderId = 123;
-        Order order = Order.builder().id(1L).user(user).build();
-
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-
-        // when
-        orderService.deleteOrder(orderId, userId);
-
-        // then
-        verify(orderRepository, times(1)).delete(order);
-    }
-
-    @Test
-    public void deleteOrderTest_Forbidden_Exception() {
-        // given
-        long unauthorizedUserId = 99;
-        long orderId = 1L;
-        Order order = orderFixture(orderId);
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-
-        // then
-        assertThrows(ForbiddenException.class, () ->
-                orderService.deleteOrder(orderId, unauthorizedUserId));
+        verify(orderRepository, times(1)).countOrderBetweenDate(user.getId(), startDateTime, endDateTime);
     }
 
     private Order orderFixture(long orderId) {
@@ -184,14 +188,12 @@ public class OrderServiceTest {
                 .id(1L)
                 .product(product)
                 .quantity(2)
-                .totalPrice(BigDecimal.valueOf(200.0))
                 .build();
 
         return Order.builder()
                 .id(orderId)
                 .user(user)
                 .orderProduct(Collections.singletonList(orderProduct))
-                .requestMessage("Sample order request")
                 .orderedAt(LocalDateTime.now())
                 .orderPrice(BigDecimal.valueOf(200.0))
                 .build();
@@ -200,11 +202,9 @@ public class OrderServiceTest {
     private List<OrderProduct> createSampleOrderProduct(Product product, List<OrderProductRequestDto> requestDtos) {
         List<OrderProduct> orderProducts = new ArrayList<>();
         for (OrderProductRequestDto requestDto : requestDtos) {
-            BigDecimal totalPrice = BigDecimal.valueOf(product.getPrice()).multiply(BigDecimal.valueOf(requestDto.getQuantity()));
             OrderProduct orderProduct = OrderProduct.builder()
                     .product(product)
                     .quantity(requestDto.getQuantity())
-                    .totalPrice(totalPrice)
                     .build();
             orderProducts.add(orderProduct);
         }

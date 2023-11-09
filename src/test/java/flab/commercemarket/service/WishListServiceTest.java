@@ -52,18 +52,20 @@ public class WishListServiceTest {
     long productId = 1L;
     User user;
     Product product;
+    String email;
 
     @BeforeEach
     void init() {
         user = User.builder().id(userId).role(Role.USER).email("a@gmail.com").build();
         product = Product.builder().id(productId).name("productName").build();
+        email = "aaa@gmail.com";
     }
 
     @Test
     @DisplayName("찜 목록을 등록한다.")
     public void registerWishListTest() throws Exception {
         // given
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(productService.getProductById(productId)).thenReturn(product);
         when(wishListRepository.getWishListItemByUserId(userId)).thenReturn(new ArrayList<>());
 
@@ -71,7 +73,7 @@ public class WishListServiceTest {
         when(wishListRepository.save(any(WishList.class))).thenReturn(wishList);
 
         // when
-        WishList result = wishListService.registerWishList(userId, productId);
+        WishList result = wishListService.registerWishList(email, productId);
 
         // then
         assertThat(userId).isEqualTo(result.getUserId());
@@ -79,27 +81,27 @@ public class WishListServiceTest {
     }
 
     @Test
-    @DisplayName("찜 목록 등록 시 사용자가 존재하지 않으면 예외가 발생한다.")
+    @DisplayName("찜 목록 등록 시 상품이 존재하지 않으면 예외가 발생한다.")
     public void registerWishListTest_notFountUser() throws Exception {
         // given
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(productService.getProductById(userId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            wishListService.registerWishList(userId, productId);
+            wishListService.registerWishList(email, productId);
         });
     }
 
     @Test
-    @DisplayName("찜 목록 등록 시 상품이 존재하지 않으면 예외가 발생한다.")
+    @DisplayName("찜 목록 등록 시 사용자가 존재하지 않으면 예외가 발생한다.")
     public void registerWishListTest_notFountProduct() throws Exception {
         // given
-        when(userService.getUserById(userId)).thenThrow(DataNotFoundException.class);
+        when(userService.getUserByEmail(email)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            wishListService.registerWishList(userId, productId);
+            wishListService.registerWishList(email, productId);
         });
     }
 
@@ -112,10 +114,11 @@ public class WishListServiceTest {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         List<WishList> wishLists = new ArrayList<>();
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(wishListRepository.findAllByUserId(userId, pageable)).thenReturn(wishLists);
 
         // When
-        List<WishList> result = wishListService.findWishLists(userId, page, size);
+        List<WishList> result = wishListService.findWishLists(email, page, size);
 
         // Then
         verify(wishListRepository).findAllByUserId(userId, pageable);
@@ -126,10 +129,11 @@ public class WishListServiceTest {
     public void countWishListByUserIdTest() throws Exception {
         // given
         List<WishList> wishLists = wishListsFixture();
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(wishListRepository.countByUserId(userId)).thenReturn((long) wishLists.size());
 
         // when
-        long result = wishListService.countWishListByUserId(userId);
+        long result = wishListService.countWishListByUserId(email);
 
         // then
         assertThat(wishLists.size()).isEqualTo(result);
@@ -140,10 +144,11 @@ public class WishListServiceTest {
         // given
         long wishListId = 10L;
         WishList wishList = wishListFixture(wishListId);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(wishListRepository.findById(wishListId)).thenReturn(Optional.of(wishList));
 
         // when
-        wishListService.deleteWishList(userId, wishListId);
+        wishListService.deleteWishList(email, wishListId);
 
         // then
         verify(wishListRepository, times(1)).delete(wishList);
@@ -153,13 +158,15 @@ public class WishListServiceTest {
     public void deleteWishListTest_Forbidden_Exception() throws Exception {
         // given
         long unauthorizedUserId = 100;
+        User forbiddenUser = User.builder().id(unauthorizedUserId).role(Role.USER).build();
         long wishListId = 10L;
         WishList wishList = wishListFixture(wishListId);
+        when(userService.getUserByEmail(email)).thenReturn(forbiddenUser);
         when(wishListRepository.findById(wishListId)).thenReturn(Optional.of(wishList));
 
         // then
         assertThrows(ForbiddenException.class, () ->
-                wishListService.deleteWishList(unauthorizedUserId, wishListId));
+                wishListService.deleteWishList(email, wishListId));
     }
 
     private WishList wishListFixture(long wishlistId) {
