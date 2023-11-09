@@ -73,7 +73,7 @@ public class CartService {
     }
 
     @Transactional(readOnly = true)
-    public long countCartByUserId(String email) {
+    public long countCartByUserEmail(String email) {
         return cartRepository.countCartByEmail(email);
     }
 
