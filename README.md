@@ -19,7 +19,7 @@ Java11, Spring Boot 2.x, Gradle, JPA, Redis, MySQL, OAuth 2.0, Docker, Jenkins, 
 - 기술에 적용된 다양한 디자인 패턴을 학습하여 객체지향 원리를 이해하기 위해 노력했습니다.
 
 # 기술적 이슈와 해결과정
-- [N+1 문제 해결](https://velog.io/@taebong98/N1-%EB%AC%B8%EC%A0%9C-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
+- [N+1 문제 해결](https://velog.io/@taebong98/n1-trouble-shooting)
 - [DataBase Replication 필요성과 적용과정](https://velog.io/@taebong98/MySQL-Replication)
 - [낙관적 락을 활용한 동시성이슈 해결과정](https://velog.io/@taebong98/%EB%82%99%EA%B4%80%EC%A0%81-%EB%9D%BD%EC%9C%BC%EB%A1%9C-%EB%8F%99%EC%8B%9C%EC%84%B1%EC%9D%B4%EC%8A%88-%ED%95%B4%EA%B2%B0)
 - [전략패턴을 활용한 중복코드 제거](https://velog.io/@taebong98/%EC%A0%84%EB%9E%B5%ED%8C%A8%ED%84%B4%EC%9C%BC%EB%A1%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%A4%91%EB%B3%B5%EC%BD%94%EB%93%9C-%EC%A0%9C%EA%B1%B0%ED%95%98%EA%B8%B0)
