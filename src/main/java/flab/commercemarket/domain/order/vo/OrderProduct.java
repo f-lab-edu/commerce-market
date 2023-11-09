@@ -1,13 +1,10 @@
 package flab.commercemarket.domain.order.vo;
 
+import flab.commercemarket.controller.order.dto.OrderProductDto;
 import flab.commercemarket.domain.product.vo.Product;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -23,11 +20,17 @@ public class OrderProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
 
     private int quantity;
 
-    private BigDecimal totalPrice;
+    public OrderProductDto toOrderProductDto() {
+        return OrderProductDto.builder()
+                .id(id)
+                .productResponseDto(product.toProductResponseDto())
+                .quantity(quantity)
+                .build();
+    }
 }

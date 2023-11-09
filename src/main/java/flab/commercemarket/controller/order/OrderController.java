@@ -1,6 +1,8 @@
 package flab.commercemarket.controller.order;
 
+import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.common.responsedto.PageResponseDto;
+import flab.commercemarket.controller.order.dto.OrderGetResponseDto;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
 import flab.commercemarket.controller.order.dto.OrderResponseDto;
 import flab.commercemarket.domain.order.OrderService;
@@ -18,33 +20,34 @@ import java.util.stream.Collectors;
 @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
 public class OrderController {
     private final OrderService orderService;
+    private final AuthorizationHelper authorizationHelper;
 
     @PostMapping
-    public OrderResponseDto postOrder(@RequestParam long loginUserId, @RequestBody OrderRequestDto orderRequestDto) {
-        Order order = orderService.registerOrder(loginUserId, orderRequestDto);
+    public OrderResponseDto postOrder(@RequestBody OrderRequestDto orderRequestDto) {
+        String email = authorizationHelper.getPrincipalEmail();
+        Order order = orderService.registerOrder(email, orderRequestDto);
         return order.toOrderResponseDto();
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponseDto getOrder(@PathVariable long orderId) {
+    public OrderGetResponseDto getOrder(@PathVariable long orderId) {
         Order order = orderService.getOrder(orderId);
-        return order.toOrderResponseDto();
+
+        return order.toOrderGetResponseDto();
     }
 
     @GetMapping
-    public PageResponseDto<OrderResponseDto> getOrderDateRange(@RequestParam String startDate,
-                                                               @RequestParam String endDate,
-                                                               @RequestParam int page,
-                                                               @RequestParam int size) {
+    public PageResponseDto<OrderGetResponseDto> getOrderDateRange(@RequestParam String startDate, @RequestParam String endDate, @RequestParam int page, @RequestParam int size) {
 
-        List<OrderResponseDto> contents = orderService.getOrderByDate(startDate, endDate, page, size)
+        String email = authorizationHelper.getPrincipalEmail();
+        List<OrderGetResponseDto> contents = orderService.getOrderByDate(email, startDate, endDate, page, size)
                 .stream()
-                .map(Order::toOrderResponseDto)
+                .map(Order::toOrderGetResponseDto)
                 .collect(Collectors.toList());
 
-        long totalElements = orderService.countOrderByDate(startDate, endDate);
+        long totalElements = orderService.countOrderByDate(email, startDate, endDate);
 
-        return PageResponseDto.<OrderResponseDto>builder()
+        return PageResponseDto.<OrderGetResponseDto>builder()
                 .size(size)
                 .page(page)
                 .content(contents)

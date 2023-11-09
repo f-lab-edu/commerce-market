@@ -33,7 +33,7 @@ public class WishListService {
         log.info("Start registerWishList");
         User foundUser = userService.getUserByEmail(email);
 
-        Product foundProduct = productService.getProduct(productId);
+        Product foundProduct = productService.getProductById(productId);
         verifyDuplicatedWishList(foundUser.getId(), productId);
 
         WishList wishList = WishList.builder()

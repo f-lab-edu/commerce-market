@@ -1,6 +1,5 @@
 package flab.commercemarket.common.helper;
 
-import flab.commercemarket.common.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;

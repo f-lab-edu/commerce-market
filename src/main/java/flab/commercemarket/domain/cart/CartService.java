@@ -33,7 +33,7 @@ public class CartService {
         log.info("Start registerCart");
 
         User foundUser = userService.getUserByEmail(email);
-        Product foundProduct = productService.getProduct(data.getProductId());
+        Product foundProduct = productService.getProductById(data.getProductId());
 
         checkDuplicateCartItem(foundUser.getId(), data.getProductId());
 
@@ -99,7 +99,7 @@ public class CartService {
                 .mapToInt(cart -> {
                     int quantity = cart.getQuantity();
                     long productId = cart.getProductId();
-                    int price = productService.getProduct(productId).getPrice();
+                    int price = productService.getProductById(productId).getPrice();
                     return quantity * price;
                 }).sum();
     }

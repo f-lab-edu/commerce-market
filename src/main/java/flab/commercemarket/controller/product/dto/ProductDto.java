@@ -25,7 +25,4 @@ public class ProductDto {
 
     @NotNull(message = "Description cannot be null")
     private String description;
-
-    @Positive(message = "Seller ID must be a positive value")
-    private long sellerId;
 }

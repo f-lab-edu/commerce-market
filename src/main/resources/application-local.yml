@@ -1,12 +1,12 @@
 spring:
   datasource:
     master:
-      url: jdbc:mysql://localhost:57015/market
+      url: jdbc:mysql://localhost:53152/market
       username: ENC(0TzQJZvEE7TpaAexvkbLwA==)
       password: ENC(OI5c6BncKMZXJabXAubyfw==)
       driver-class-name: ENC(Bhpswp3jpRS+YqAIXt+8U94M6BqOWpdQP1osszD1FqUBG6SxUMgtDw==)
     slave:
-      url: jdbc:mysql://localhost:57018/market
+      url: jdbc:mysql://localhost:53154/market
       username: ENC(03gowqi1UzWEEWdc13bX+A==)
       password: ENC(GOoxTZARqOXfIVa+NWeuSw==)
       driver-class-name: ENC(Bhpswp3jpRS+YqAIXt+8U94M6BqOWpdQP1osszD1FqUBG6SxUMgtDw==)

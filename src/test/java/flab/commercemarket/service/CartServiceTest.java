@@ -53,12 +53,14 @@ public class CartServiceTest {
     CartDto cartDto;
     User user;
     Product product;
+    String email;
 
     @BeforeEach
     void init() {
         user = User.builder().id(userId).role(Role.USER).email("a@gmail.com").build();
         product = Product.builder().id(productId).name("productName").build();
-        cartDto = new CartDto(userId, productId, 10);
+        cartDto = new CartDto(productId, 10);
+        email = "aaa@gmail.com";
     }
 
     @Test
@@ -68,13 +70,13 @@ public class CartServiceTest {
         long cartId = 100L;
         Cart cart = cartFixture(cartId);
 
-        when(cartRepository.isAlreadyExistentProductInUserCart(userId, productId)).thenReturn(false);
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(productService.getProductById(productId)).thenReturn(product);
+        when(cartRepository.isAlreadyExistentProductInUserCart(userId, productId)).thenReturn(false);
         when(cartRepository.save(any(Cart.class))).thenReturn(cart);
 
         // when
-        Cart registeredCart = cartService.registerCart(cartDto, userId);
+        Cart registeredCart = cartService.registerCart(cartDto, email);
 
         // then
         assertNotNull(registeredCart);
@@ -85,12 +87,11 @@ public class CartServiceTest {
     @DisplayName("장바구니 등록시 사용자가 존재하지 않으면 예외가 발생한다.")
     public void registerCartTest_notFoundUser() throws Exception {
         // given
-        when(cartRepository.isAlreadyExistentProductInUserCart(userId, productId)).thenReturn(false);
-        when(userService.getUserById(userId)).thenThrow(DataNotFoundException.class);
+        when(userService.getUserByEmail(email)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            cartService.registerCart(cartDto, userId);
+            cartService.registerCart(cartDto, email);
         });
     }
 
@@ -98,13 +99,12 @@ public class CartServiceTest {
     @DisplayName("장바구니 등록 시 상품이 존재하지 않으면 예외가 발생한다.")
     public void registerCartTest_notFoundProduct() throws Exception {
         // given
-        when(cartRepository.isAlreadyExistentProductInUserCart(userId, productId)).thenReturn(false);
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(productService.getProductById(productId)).thenThrow(DataNotFoundException.class);
 
         // then
         assertThrows(DataNotFoundException.class, () -> {
-            cartService.registerCart(cartDto, userId);
+            cartService.registerCart(cartDto, email);
         });
     }
 
@@ -114,15 +114,15 @@ public class CartServiceTest {
         long cartId = 10L;
         Cart cart = cartFixture(cartId);
         when(cartRepository.findById(cartId)).thenReturn(Optional.of(cart));
-        CartDto updateData = new CartDto(userId, productId, 99);
+        when(userService.getUserByEmail(email)).thenReturn(user);
+        CartDto updateData = new CartDto(productId, 99);
 
         // when
-        Cart updateCart = cartService.updateCart(updateData, cartId, userId);
+        Cart updateCart = cartService.updateCart(updateData, cartId, email);
 
         // then
         assertNotNull(updateCart);
         assertThat(updateData.getProductId()).isEqualTo(updateCart.getProductId());
-        assertThat(updateData.getUserId()).isEqualTo(updateCart.getUserId());
         assertThat(updateData.getQuantity()).isEqualTo(updateCart.getQuantity());
     }
 
@@ -130,15 +130,16 @@ public class CartServiceTest {
     @DisplayName("로그인 된 사용자 정보와 장바구니 정보의 사용자 정보가 일치하지 않으면 예외를 발생시킨다.")
     public void updateCartTest_ForbiddenException() throws Exception {
         // given
-        long unauthorizedUserId = 99;
+        User forbiddenUser = User.builder().id(999L).role(Role.USER).build();
         long cartId = 10L;
         Cart cart = cartFixture(cartId);
+        when(userService.getUserByEmail(email)).thenReturn(forbiddenUser);
         when(cartRepository.findById(cartId)).thenReturn(Optional.of(cart));
-        CartDto updateData = new CartDto(userId, productId, 99);
+        CartDto updateData = new CartDto(productId, 99);
 
         // then
         assertThrows(ForbiddenException.class, () -> {
-            cartService.updateCart(updateData, cartId, unauthorizedUserId);
+            cartService.updateCart(updateData, cartId, email);
         });
     }
 
@@ -151,10 +152,11 @@ public class CartServiceTest {
         Pageable pageable = PageRequest.of(page - 1, size);
         List<Cart> cartList = cartListFixture();
 
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(cartRepository.findCartByUserId(userId, pageable)).thenReturn(cartList.subList(0, size));
 
         // when
-        List<Cart> result = cartService.findCarts(userId, page, size);
+        List<Cart> result = cartService.findCarts(email, page, size);
 
         // then
         assertThat(result.size()).isEqualTo(size);
@@ -163,10 +165,10 @@ public class CartServiceTest {
     @Test
     public void countCartByUserIdTest() throws Exception {
         // given
-        when(cartRepository.countCartByUserId(userId)).thenReturn((long) cartListFixture().size());
+        when(cartRepository.countCartByEmail(email)).thenReturn((long) cartListFixture().size());
 
         // when
-        long result = cartService.countCartByUserId(userId);
+        long result = cartService.countCartByUserEmail(email);
 
         // then
         assertThat(cartListFixture().size()).isEqualTo(result);
@@ -179,9 +181,10 @@ public class CartServiceTest {
         Cart cart = cartFixture(cartId);
 
         when(cartRepository.findById(cartId)).thenReturn(Optional.of(cart));
+        when(userService.getUserByEmail(email)).thenReturn(user);
 
         // when
-        cartService.deleteCart(cartId, userId);
+        cartService.deleteCart(email, cartId);
 
         // then
         verify(cartRepository, times(1)).delete(cart);
@@ -201,12 +204,13 @@ public class CartServiceTest {
         cartList.add(cart1);
         cartList.add(cart2);
 
+        when(userService.getUserByEmail(email)).thenReturn(user);
         when(cartRepository.findAllByUserId(userId)).thenReturn(cartList);
         when(productService.getProductById(1L)).thenReturn(product1);
         when(productService.getProductById(2L)).thenReturn(product2);
 
         // When
-        int totalPrice = cartService.calculateTotalPrice(userId);
+        int totalPrice = cartService.calculateTotalPrice(email);
 
         // then
         assertThat(4000).isEqualTo(totalPrice);
