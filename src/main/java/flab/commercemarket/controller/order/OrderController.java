@@ -56,7 +56,8 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    public void deleteOrder(@PathVariable long orderId, @RequestParam long loginUserId) {
-        orderService.deleteOrder(orderId, loginUserId);
+    public void deleteOrder(@PathVariable long orderId) {
+        String email = authorizationHelper.getPrincipalEmail();
+        orderService.deleteOrder(email, orderId);
     }
 }

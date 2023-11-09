@@ -43,7 +43,7 @@ public class CartController {
                 .map(Cart::toCartResponseDto)
                 .collect(Collectors.toList());
 
-        long totalElements = cartService.countCartByUserId(principalEmail);
+        long totalElements = cartService.countCartByUserEmail(principalEmail);
 
         return PageResponseDto.<CartResponseDto>builder()
                 .page(page)

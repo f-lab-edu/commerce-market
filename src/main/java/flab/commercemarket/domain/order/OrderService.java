@@ -1,6 +1,7 @@
 package flab.commercemarket.domain.order;
 
 import flab.commercemarket.common.exception.DataNotFoundException;
+import flab.commercemarket.common.exception.ForbiddenException;
 import flab.commercemarket.common.helper.AuthorizationHelper;
 import flab.commercemarket.controller.order.dto.OrderRequestDto;
 import flab.commercemarket.domain.order.repository.OrderRepository;
@@ -73,10 +74,16 @@ public class OrderService {
     }
 
     @Transactional
-    public void deleteOrder(long orderId, long loginUserId) {
+    public void deleteOrder(String email, long orderId) {
         log.info("Start deleteOrder. orderId: {}", orderId);
 
         Order order = getOrder(orderId);
+        User foundUser = userService.getUserByEmail(email);
+
+        if (order.getUserId() != foundUser.getId()) {
+            throw new ForbiddenException("권한 정보가 일치하지 않음");
+        }
+
         orderRepository.delete(order);
     }
 
