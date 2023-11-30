@@ -19,14 +19,27 @@ Java11, Spring Boot 2.x, Gradle, JPA, Redis, MySQL, OAuth 2.0, Docker, Jenkins, 
 - 기술에 적용된 다양한 디자인 패턴을 학습하여 객체지향 원리를 이해하기 위해 노력했습니다.
 
 # 기술적 이슈와 해결과정
-- [N+1 문제 해결](https://velog.io/@taebong98/n1-trouble-shooting)
-- [DataBase Replication 필요성과 적용과정](https://velog.io/@taebong98/MySQL-Replication)
-- [낙관적 락을 활용한 동시성이슈 해결과정](https://velog.io/@taebong98/%EB%82%99%EA%B4%80%EC%A0%81-%EB%9D%BD%EC%9C%BC%EB%A1%9C-%EB%8F%99%EC%8B%9C%EC%84%B1%EC%9D%B4%EC%8A%88-%ED%95%B4%EA%B2%B0)
-- [전략패턴을 활용한 중복코드 제거](https://velog.io/@taebong98/%EC%A0%84%EB%9E%B5%ED%8C%A8%ED%84%B4%EC%9C%BC%EB%A1%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%A4%91%EB%B3%B5%EC%BD%94%EB%93%9C-%EC%A0%9C%EA%B1%B0%ED%95%98%EA%B8%B0)
-- [분산서버 환경의 세션 스토리지 선택 고려사항](https://velog.io/@taebong98/%EB%8B%A4%EC%A4%91-%EC%84%9C%EB%B2%84-%ED%99%98%EA%B2%BD%EC%9D%98-%EC%84%B8%EC%85%98-%EC%8A%A4%ED%86%A0%EB%A6%AC%EC%A7%80-%EA%B3%A0%EB%A0%A4%EC%82%AC%ED%95%AD)
-- FetchJoin, 1차캐시를 활용해 DB와의 통신 줄이기(In Progress)
-- CompletableFuture를 활용해 결제로직 비동기 처리과정 (Todo)
-- 데이터베이스 부하를 줄이기 위해 캐시서버 도입과정(Todo)
+- Junit 활용한 단위 테스트 작성 및 테스트 커버리지를 향상시키기 위해 노력
+- Git Issue를 활용한 Task 분리
+- 문제 해결과정을 WIKI와 블로그로 정리
+- 코드리뷰를 통한 커뮤니케이션(치열하게 토론 후 결과에 승복)
+- 유스케이스 다이어그램, 시퀀스 다이어그램 활용하여 비즈니스 로직 설명 경험
+- Jenkins 배포 파이프라인 구축
+- Nginx 서버를 활용한 로드밸런싱 구축
+- JMH 벤치마킹 툴을 활용한 성능 측정
+- N+1 문제 해결
+- 데이터베이스 Master-Slave 구조 활용
+- 데이터베이스 역정규화로 조인 연산 최소화
+- 데이터베이스 인덱스 설정으로 응답속도 개선
+- 낙관적락과 사용자 인터렉션을 통해 동시성 제어
+- 전략패턴을 활용한 코드 추상화
+- 분산 환경에서 세션, 캐시 데이터 공유 방법 고민 (NoSQL 활용)
+- FetchJoin, 1차캐시를 활용해 DB와의 통신 줄이기
+- CompletableFuture 활용한 결제 요청 비동기 처리, 보상트랜잭션으로 예외 처리
+- 데이터베이스 부하를 줄이기 위해 캐시서버 도입과정
+- SpringSecurity와 OAuth를 활용한 보안 기능 구현
+- AOP를 통한 횡단관심사 분리
+- Git Rebase를 활용하여 커밋트리 가독성 향상
 
 # 브랜치 전략
 
