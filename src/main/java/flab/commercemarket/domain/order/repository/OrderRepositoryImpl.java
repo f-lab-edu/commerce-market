@@ -30,9 +30,10 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     @Override
     public long countOrderBetweenDate(long userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         return queryFactory
-                .selectFrom(order)
-                .where(order.orderedAt.between(startDateTime, endDateTime).and(order.user.id.eq(userId)))
-                .stream()
-                .count();
+                .select(order.count())
+                .from(order)
+                .where(order.user.id.eq(userId)
+                        .and(order.orderedAt.between(startDateTime, endDateTime)))
+                .fetchOne();
     }
 }

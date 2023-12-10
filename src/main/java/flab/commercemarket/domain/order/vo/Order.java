@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(indexes = @Index(name = "idx_order_id", columnList = "id"))
+@Table(indexes = @Index(name = "idx_ordered_at", columnList = "ordered_at"))
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +32,7 @@ public class Order {
     @JoinColumn(name = "order_id")
     private List<OrderProduct> orderProduct;
 
+    @Column(name = "ordered_at")
     private LocalDateTime orderedAt;
 
     private BigDecimal orderPrice;

@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final AuthorizationHelper authorizationHelper;
     private final UserService userService;
     private final ProductService productService;
     private final OrderRepository orderRepository;
@@ -89,7 +88,6 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public List<Order> getOrderByDate(String email, String startDate, String endDate, int page, int size) {
-        log.info("Start getOrderByDate.");
         LocalDateTime startDateTime = dateUtils.parseDateTime(startDate + "T00:00:00");
         LocalDateTime endDateTime = dateUtils.parseDateTime(endDate + "T23:59:59");
         log.info("Parse String to LocalDateTime. startDateTime: {}, endDateTime: {}", startDateTime, endDateTime);
@@ -104,8 +102,6 @@ public class OrderService {
         log.info("Start countOrderByDate.");
         LocalDateTime startDateTime = dateUtils.parseDateTime(startDate + "T00:00:00");
         LocalDateTime endDateTime = dateUtils.parseDateTime(endDate + "T23:59:59");
-        log.info("Parse String to LocalDateTime. startDateTime: {}, endDateTime: {}", startDateTime, endDateTime);
-
         User foundUser = userService.getUserByEmail(email);
         return orderRepository.countOrderBetweenDate(foundUser.getId(), startDateTime, endDateTime);
     }
@@ -117,14 +113,13 @@ public class OrderService {
     }
 
     private BigDecimal calculateOrderPrice(OrderRequestDto orderRequestDto) {
-        BigDecimal orderPrice = orderRequestDto.getProducts().stream()
+        return orderRequestDto.getProducts().stream()
                 .map(product -> {
                     long productId = product.getProductId();
                     Product foundProduct = productService.getProductById(productId);
                     return BigDecimal.valueOf(product.getQuantity()).multiply(BigDecimal.valueOf(foundProduct.getPrice()));
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return orderPrice;
     }
 
     private List<OrderProduct> createOrderProductList(OrderRequestDto orderRequestDto) {
