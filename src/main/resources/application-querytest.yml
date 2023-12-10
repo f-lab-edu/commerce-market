@@ -1,0 +1,50 @@
+spring:
+  datasource:
+      url: jdbc:mysql://localhost:3306/test
+      username: root
+      password:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  redis:
+    host: localhost
+    port: 6380 # 로컬 6380 포트와 docker 6379 포트 연결 (캐시적용 고려)
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  jasypt:
+    encryptor:
+      bean: jasyptStringEncryptor
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ENC(GVMzcooe8t4TV04SIHT3nTx5oVi1KV+hKAjWh7XZd9/U23osi4RDAfF3ZIJml2cjygn0wPnOd4Go8PY2hIVTsQ7Rt3Hpa0oM/x2bESiuLAc=)
+            client-secret: ENC(8hRdO4frfILmIzsS+vCUHpv/C3AiRxCi2laecxwG5izocay060wIa7SK6O6V6FHy)
+            scope:
+              - email
+              - profile
+
+iamport:
+  host: api.iamport.kr
+  token: https://api.iamport.kr/users/getToken
+  prepare: https://api.iamport.kr/payments/prepare
+  cancel: https://api.iamport.kr/payments/cancel
+  pre-valid: https://api.iamport.kr/payments/prepare
+  imp_key: ENC(TP0S4I3d5gj7hxH5gVSrRCK5PbESBuXWTqPANtm1+h8=)
+  imp_secret: ENC(F9R6giwITWVe6tXCkiv6rvHX/it3CBJEIibUBLX+3/NPzNT0tqcGe0tc9QWUoc2bdgFDTYKg5D1YG4mIix2IsWK+Zkdwa+M3IFZHLHp5p9kAUucmExCLIsygMcKDRXG8)
+
+rest-template:
+  payment:
+    connect-timeout: 3
+    read-timeout: 30
+  login:
+    connect-timeout: 3
+    read-timeout: 30

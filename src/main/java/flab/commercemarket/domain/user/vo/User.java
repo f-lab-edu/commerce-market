@@ -13,8 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity(name = "market_user")
 @Table(indexes = {
-        @Index(name = "idx_name", columnList = "name"),
-        @Index(name = "idx_user_id", columnList = "id")
+        @Index(name = "idx_name", columnList = "name")
 })
 public class User {
     @Id
